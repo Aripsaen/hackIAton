@@ -14,7 +14,7 @@ install:
 	pip install -r worker/requirements.txt
 
 run-api:
-	PYTHONPATH=. .venv/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+	export GOOGLE_APPLICATION_CREDENTIALS=$(SERVICE_ACCOUNT_FILE) && PYTHONPATH=. .venv/bin/uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
 
 # Docker build and push for API
 build-api-docker:

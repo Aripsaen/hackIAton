@@ -11,7 +11,7 @@ app = FastAPI(title="AI Procurement Analysis API")
 origins = config.settings.ALLOWED_ORIGINS.split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +35,8 @@ def initialize_upload(payload: schemas.UploadInitPayload):
         )
         return schemas.UploadInitResponse(signed_url=signed_url, gcs_path=gcs_path)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Failed to generate signed URL: {e}")
 
 def run_cloud_run_job(case_id: str):
