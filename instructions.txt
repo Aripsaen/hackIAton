@@ -1,34 +1,29 @@
-✅ Scaffolding complete.
+✅ Full-Stack Application Ready
 
 --- NEXT STEPS ---
 
-1.  **Set Environment Variables:**
-    *   `cd repo` (or navigate to the project root if you already ran the scaffold script)
-    *   `cp .env.example .env`
-    *   Edit `.env` with your GCP Project ID, GCS Bucket, Sheet ID, etc.
-    *   **Crucially, define both LLM models:** `VERTEX_MODEL_NAME` (for extraction) and `VERTEX_PRO_MODEL_NAME` (for analysis).
+El proyecto ahora es una aplicación full-stack. Necesitas correr el backend y el frontend por separado para el desarrollo local.
 
-2.  **Run Locally:**
-    *   `make install` (This will install LangChain and other new dependencies)
-    *   `make run-api`
+**1. Set Environment Variables (Backend):**
+    *   En la raíz del proyecto, copia `.env.example` a `.env`.
+    *   Edita `.env` con tus credenciales de GCP y los nombres de los modelos de IA (`VERTEX_MODEL_NAME` y `VERTEX_PRO_MODEL_NAME`).
 
-3.  **Build Docker Images:**
-    *   `export PROJECT_ID=`gcloud config get-value project`
-    *   `export REGION="us-central1"` # Or your preferred region
-    *   `gcloud auth configure-docker ${REGION}-docker.pkg.dev`
-    *   `make build-api-docker && make push-api-docker`
-    *   `make build-worker-docker && make push-worker-docker`
+**2. Terminal 1: Run Backend API**
+    *   `make install` (Instala dependencias de Python)
+    *   `make run-api` (Inicia el servidor de FastAPI en http://localhost:8000)
 
-4.  **Deploy to Cloud Run:**
-    *   **Deploy API Service:**
-        `gcloud run deploy api-procurement --source . --platform managed --region ${REGION} --allow-unauthenticated --set-env-vars-from-file .env`
-    *   **Deploy Worker Job:**
-        `gcloud run jobs deploy worker-procurement --source . --platform managed --region ${REGION} --set-env-vars-from-file .env`
+**3. Terminal 2: Run Frontend**
+    *   `cd frontend`
+    *   `npm install` (Instala dependencias de JavaScript)
+    *   `npm run dev` (Inicia el servidor de desarrollo de Vite, usualmente en http://localhost:5173)
 
-5.  **Trigger a Job Execution:**
-    *   First, upload one or more PDFs to `gs://<your-bucket>/raw/<case-id>/`
-    *   `gcloud run jobs execute worker-procurement --region ${REGION} --args "--case_id=<case-id>"`
+**4. Open the Web App:**
+    *   Abre tu navegador y ve a la dirección del servidor de Vite (ej. `http://localhost:5173`).
+    *   La aplicación web se conectará automáticamente a tu API local que corre en el puerto 8000.
 
-6.  **Check Results:**
-    *   After the job succeeds, you can get all results (ready for a frontend) by calling the API: `curl http://<your-api-url>/result/<case-id>`
-    *   Or check the artifacts in your GCS bucket and the Looker Studio dashboard.
+**5. Deployment:**
+    *   **Backend**: Usa los comandos de `gcloud` en el `README.md` para desplegar la API y el Worker a Cloud Run.
+    *   **Frontend**: 
+        1.  Corre `npm run build` dentro de la carpeta `frontend` para generar los archivos estáticos en la carpeta `dist/`.
+        2.  Sube el contenido de la carpeta `dist/` a un servicio de hosting como Firebase Hosting o un bucket de GCS.
+        3.  Asegúrate de que el frontend desplegado apunte a la URL de tu API en Cloud Run.

@@ -1,61 +1,49 @@
-### Explicación del Código y Tecnologías (Versión 2)
+### Explicación del Código y Tecnologías (Versión 3 - Full Stack)
 
-Hola! Aquí tienes una explicación actualizada del proyecto, reflejando los últimos cambios.
+Hola! El proyecto ha evolucionado a una aplicación completa. Aquí tienes la explicación actualizada.
 
 --- 
 
 ### 1. ¿Qué Construimos? (El Panorama General)
 
-El objetivo sigue siendo automatizar el análisis de documentos de licitaciones, pero el proceso ahora es más sofisticado y está pensado para ser el **backend de una aplicación web**.
+Ahora tenemos una **aplicación web completa y funcional**. Un usuario puede:
 
-El flujo ahora es un **proceso de dos pasos con IA**:
+1.  **Abrir la página web** en su navegador.
+2.  **Crear un "Caso"** y **subir los archivos PDF** directamente desde la interfaz.
+3.  **Ver el progreso** del análisis en tiempo real.
+4.  Una vez completado, **explorar los resultados** en dos vistas principales:
+    *   Un **Dashboard** que muestra un resumen ejecutivo generado por la IA más potente (Gemini Pro), junto con KPIs y métricas clave.
+    *   Una **Tabla Comparativa** que permite ordenar y filtrar las diferentes ofertas analizadas.
 
-1.  **Subes los PDFs**: Un usuario sube uno o más PDFs para una licitación (`case_id`).
-2.  **Paso 1: Extracción Rápida (Documento por Documento)**: Un "trabajador" en la nube usa un modelo de IA rápido y económico (**Gemini Flash**) para leer cada PDF y extraer la información clave en un formato estructurado (JSON). Esto se hace para cada documento individualmente.
-3.  **Paso 2: Análisis Profundo (Caso Completo)**: Una vez que todos los documentos han sido procesados y comparados, se invoca a un segundo modelo de IA, más potente y con mayor capacidad de razonamiento (**Gemini Pro**). Este modelo recibe toda la información consolidada y genera un **análisis ejecutivo final** para todo el caso, incluyendo un resumen y una evaluación de riesgos.
-4.  **Resultados para la Web y Dashboard**: 
-    *   La API expone un endpoint (`/result/{case_id}`) que entrega **toda la información en un solo JSON**, listo para que una aplicación web (frontend) lo muestre en una página de resultados.
-    *   Paralelamente, se sigue generando un reporte simple en PDF y actualizando un Google Sheet para el dashboard de Looker Studio.
+El backend sigue haciendo el mismo proceso de dos pasos (Extracción con Gemini Flash, Análisis con Gemini Pro), pero ahora sirve toda esta información a una interfaz de usuario rica e interactiva.
 
 --- 
 
 ### 2. Tecnologías Utilizadas (Las Piezas del Lego)
 
-**a) FastAPI (Para la API)**
+Se añade una nueva sección fundamental:
 
-*   Su rol es el mismo, pero ahora el endpoint `GET /result/{case_id}` es más importante, ya que en lugar de devolver links de descarga, **devuelve el contenido JSON directamente**, lo cual es mucho más eficiente para un frontend.
+**a) Frontend con React y Vite**
 
-**b) Google Cloud Run (Para ejecutar el código)**
+*   **¿Qué es React?**: Es la librería de JavaScript más popular para construir interfaces de usuario interactivas. Permite crear componentes reutilizables (como botones, tarjetas, tablas) que se actualizan de forma eficiente cuando los datos cambian.
+*   **¿Qué es Vite?**: Es una herramienta de desarrollo moderna que nos da un servidor para probar el frontend localmente y que luego empaqueta todo el código de React en archivos optimizados para subir a producción.
+*   **¿Cómo se usa?**: Todo el código en la carpeta `frontend/` es parte de la aplicación React. `App.jsx` es el componente principal, y la carpeta `components/` contiene las piezas de la interfaz como `Dashboard.jsx` y `Comparison.jsx`.
 
-*   Su función no cambia: el **Service** ejecuta la API y el **Job** ejecuta el worker.
+**b) FastAPI, Cloud Run, Gemini, LangChain, GCS, etc.**
 
-**c) Vertex AI (Gemini) - El Cerebro de IA en Dos Pasos**
-
-*   Ahora usamos dos modelos de forma estratégica:
-    1.  **Gemini Flash (`VERTEX_MODEL_NAME`)**: Se usa en el paso `WF-02` para la extracción de datos. Es rápido y barato, ideal para procesar muchos documentos de forma paralela.
-    2.  **Gemini Pro (`VERTEX_PRO_MODEL_NAME`)**: Se usa al final, en el paso `WF-05b`. Es el modelo "caro" y potente, que usamos solo una vez por caso para hacer el análisis inteligente y profundo.
-
-**d) LangChain (El Orquestador de IA)**
-
-*   **¿Qué es?**: Es una librería que ayuda a conectar y encadenar llamadas a modelos de IA de forma más sencilla.
-*   **¿Cómo se usa?**: La hemos añadido para manejar la llamada final a Gemini Pro en el paso `WF-05b`. LangChain facilita la tarea de tomar múltiples fuentes de datos (el JSON de comparación y el texto de todos los documentos), formatearlos en un prompt complejo y enviárselo al modelo.
-
-**e) GCS, Google Sheets, Looker Studio, Docker**
-
-*   Sus roles en el proyecto no han cambiado.
+*   Las tecnologías del backend no han cambiado, pero su propósito ahora está más claro: **dar soporte al frontend**. La API es el puente que conecta la interfaz de usuario con la potente lógica de análisis que corre en la nube.
 
 --- 
 
 ### 3. Estructura del Código (El Mapa del Proyecto)
 
-Los cambios más importantes están en el `worker`:
+Ahora la estructura del proyecto se ve así:
 
-*   `worker/pipelines/`:
-    *   `wf02_extract.py`: Sigue haciendo la extracción, pero ahora sabemos que usa el modelo "Flash".
-    *   `wf05_analysis.py`: **(Nuevo)** Este es el nuevo paso en la tubería que contiene la lógica de LangChain para llamar a Gemini Pro y generar el análisis final.
-    *   `run.py`: Ha sido actualizado para orquestar este nuevo paso al final del proceso.
-*   `worker/prompts/`:
-    *   `extraction_prompt.txt`: El prompt para la extracción de datos (usado por Gemini Flash).
-    *   `analysis_prompt.txt`: **(Nuevo/Modificado)** El prompt para el análisis final del caso (usado por Gemini Pro). **Aquí es donde puedes cambiar cómo razona el analista de IA.**
-*   `api/`:
-    *   `schemas.py` y `gcs.py`: Han sido modificados para que el endpoint `/result/{case_id}` cargue el contenido de los JSON y los devuelva directamente en la respuesta de la API.
+*   `frontend/`: **(Nuevo)** Contiene toda la aplicación de React.
+    *   `index.html`: El punto de entrada de la web.
+    *   `src/main.jsx`: Donde la aplicación React se inicia.
+    *   `src/App.jsx`: El componente principal que maneja las vistas (Dashboard, Comparación, Carga).
+    *   `src/components/`: Contiene todos los componentes de la UI.
+    *   `package.json`: Define las dependencias de JavaScript (React, Vite, Axios).
+
+*   `api/` y `worker/`: Siguen siendo el corazón del backend, sin cambios en su estructura interna.
