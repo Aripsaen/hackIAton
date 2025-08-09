@@ -9,7 +9,7 @@
 .upload-card {
   background: white;
   border-radius: 20px;
-  /* padding: 3rem; */
+  padding: 3rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   max-width: 800px;
   width: 100%;
