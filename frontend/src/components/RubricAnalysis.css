@@ -1,0 +1,127 @@
+.rubric-container {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 2rem;
+}
+
+.rubric-header {
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.rubric-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+}
+
+.rubric-summary-scores {
+    display: flex;
+    gap: 32px;
+}
+
+.summary-score-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-score-item span {
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-bottom: 4px;
+}
+
+.summary-score-item strong {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.rubric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.rubric-item-card {
+    background-color: #f9fafb;
+    border: 1px solid #f3f4f6;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.rubric-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.rubric-item-title {
+    font-weight: 600;
+    color: #374151;
+    text-transform: capitalize;
+}
+
+.rubric-item-score {
+    font-weight: 700;
+    color: white;
+    border-radius: 9999px;
+    padding: 4px 12px;
+    font-size: 0.875rem;
+}
+
+.rubric-item-comment {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.final-analysis-section {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.final-analysis-section h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+.analysis-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.analysis-column h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.analysis-column ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin: 0;
+    color: #4b5563;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.analysis-conclusion h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.analysis-conclusion p {
+    color: #374151;
+    font-style: italic;
+}

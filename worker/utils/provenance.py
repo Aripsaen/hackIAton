@@ -48,7 +48,7 @@ def add_provenance_to_extraction(extraction_data: dict, text_content: str) -> di
     
     expected_fields = [
         "EntidadContratante", "Contratista", "ContratistaRUC", "ObjetoContrato",
-        "MontoTotal", "Moneda", "PlazoEjecucion", "FechaDoc", "FormaPago",
+        "financials", "Moneda", "PlazoEjecucion", "FechaDoc", "FormaPago",
         "GarantiaCumplimiento", "Penalidades"
     ]
     

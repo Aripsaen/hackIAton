@@ -3,15 +3,15 @@ from .utils import config, gcs
 from .pipelines import (
     wf01_ingest,
     wf02_extract,
-    wf03_risks,
+    wf03_analysis, # Formerly wf05_analysis
     wf04_compare,
-    wf05_reports,
-    wf05_analysis # Import the new step
+    wf05_reports
 )
 
 def main(case_id: str):
     """
     Main function to run the entire document processing pipeline for a case.
+    This pipeline has been re-orchestrated to support the new prompt structures.
     """
     print(f"--- Starting processing for case_id: {case_id} ---")
     
@@ -27,26 +27,23 @@ def main(case_id: str):
             gcs.update_job_status(config.settings.BUCKET_NAME, case_id, job_id, "done")
             return
 
-        # WF-02: Extract structured data using Gemini Flash for each document.
-        print("--- Running WF-02: Extraction ---")
+        # WF-02: Extract structured data using the new, detailed prompt (LLM 1).
+        print("--- Running WF-02: Structured Extraction ---")
         extractions = [wf02_extract.run(doc) for doc in documents]
 
-        # WF-03: Apply business rules to the extracted data.
-        print("--- Running WF-03: Risk Analysis ---")
-        risk_analyses = [wf03_risks.run(ext) for ext in extractions]
+        # WF-03: Perform rubric-based analysis on each extraction (LLM 2).
+        print("--- Running WF-03: Rubric-based Analysis ---")
+        analyses = [wf03_analysis.run(ext) for ext in extractions]
 
-        # WF-04: Compare bidders and calculate KPIs across all documents.
-        print("--- Running WF-04: Comparison ---")
-        comparison_result = wf04_compare.run(case_id, risk_analyses)
+        # WF-04: Compare bidders based on both extraction and analysis data.
+        print("--- Running WF-04: Comparison & KPI Calculation ---")
+        # Pass both extractions and analyses to the comparison step
+        comparison_result = wf04_compare.run(case_id, extractions, analyses)
 
-        # WF-05a: Generate PDF/Sheet reports based on the comparison.
-        print("--- Running WF-05a: Reporting ---")
+        # WF-05: Generate PDF/Sheet reports based on the new comparison data.
+        print("--- Running WF-05: Reporting ---")
         wf05_reports.run(case_id, comparison_result)
         
-        # WF-05b: Perform a final, deep analysis of the whole case using Gemini Pro.
-        print("--- Running WF-05b: Final Analysis ---")
-        wf05_analysis.run(case_id, comparison_result, documents)
-
         print(f"--- Successfully finished processing for case_id: {case_id} ---")
         gcs.update_job_status(config.settings.BUCKET_NAME, case_id, job_id, "done")
 

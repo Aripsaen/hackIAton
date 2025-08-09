@@ -7,58 +7,60 @@ Design and build a full-stack, production-ready web application that automates t
 
 ## Scope – Phase 2
 - **In-scope (absolutely necessary)**:
-  - **React + Vite Frontend**: A single-page application providing a user interface for uploading PDFs and visualizing the analysis results (dashboard, comparison, executive summary).
-  - **Cloud Run (FastAPI) API**: Endpoints to init upload, trigger the processing job, check status, and retrieve all results as inline JSON for the frontend.
-  - **Cloud Run Job (Python Worker)**: Runs the full processing pipeline (WF-01 → WF-05).
-  - **Google Cloud Storage (GCS)**: Store original PDFs and all generated outputs.
+  - **React + Vite Frontend**: A single-page application providing a user interface for uploading documents and visualizing the analysis results.
+  - **Cloud Run (FastAPI) API**: Endpoints to manage the workflow and retrieve all results as a single, consolidated JSON object.
+  - **Cloud Run Job (Python Worker)**: Runs the full processing pipeline.
   - **Two-Step LLM Integration**:
-    - **Extractor Model (Vertex AI Gemini Flash)**: For fast, structured data extraction.
-    - **Analysis Model (Vertex AI Gemini Pro)**: For case-wide reasoning and executive summary.
-  - **LangChain**: Used in the final analysis step (WF-05b).
-  - **Secret Manager**: For all secrets and credentials.
-
-- **Out of scope**: Cloud SQL, Firestore, Pub/Sub, BigQuery, OCR, User Authentication.
+    - **Extractor Model (Gemini Flash)**: For structured data extraction.
+    - **Analysis Model (Gemini Pro)**: For rubric-based scoring and qualitative analysis on each document.
+  - **LangChain**: Used in the analysis step (WF-03).
 
 ---
 
-## Workflows
+## Workflows (Re-orchestrated)
 
 ### WF-01 – Ingest & Parsing
-- User uploads PDFs via the web interface, which uses a signed URL provided by the API.
-- Files are stored in `raw/{case_id}/`.
-- Worker extracts text and stores it in `work/{case_id}/`.
+- User uploads PDFs; text is extracted and stored in GCS.
 
 ### WF-02 – Extraction (Per-Document)
-- Use **Gemini Flash** for structured data extraction.
-- Store as `.extraction.json`.
+- Use **Gemini Flash** to extract a detailed, nested JSON structure from each document.
+- Store as `results/{case_id}/{doc_id}.extraction.json`.
 
-### WF-03 – Rules & Risks
-- Apply business rules to extracted data.
-- Store as `.risks.json`.
+### WF-03 – Analysis (Per-Document)
+- Use **LangChain and Gemini Pro** to perform a rubric-based evaluation on each extracted JSON.
+- This generates scores and qualitative feedback for every document.
+- Store as `results/{case_id}/{doc_id}.analysis.json`.
 
 ### WF-04 – Comparator
-- Aggregate data from all documents.
-- Store as `comparison.json`.
+- Aggregate data from both the extractions (e.g., `oferta.montoOfertado`) and the analyses (e.g., `totalPuntuacion`).
+- Compute final KPIs and create a comprehensive `comparison.json` object that contains all bidder data, KPIs, and their nested analysis results.
 
-### WF-05 – Reporting & Final Analysis
-- **WF-05a (Reporting)**: Generate PDF/Sheet reports.
-- **WF-05b (Final Analysis)**: Use **LangChain & Gemini Pro** for a final executive summary. Store as `final_analysis.json`.
+### WF-05 – Reporting
+- Generate PDF/Sheet reports from the final `comparison.json` data.
 
 ---
 
 ## API Contracts (FastAPI on Cloud Run)
 
-### `POST /upload-init`
-- **Input**: `{ "case_id": "string", "filename": "string", ... }`
-- **Output**: `{ "signed_url": "..." }`
-
-### `POST /process`
-- **Input**: `{ "case_id": "string" }`
-- **Output**: `{ "job_id": "..." }`
-
-### `GET /status/{job_id}`
-- **Behavior**: Returns job status.
-
 ### `GET /result/{case_id}`
-- **Behavior**: Returns a single JSON object with the full, combined content of the results, ready for the web frontend.
-- **Output Body**: Contains `case_id`, `extractions`, `comparison`, `final_analysis`, and URLs for downloadable reports.
+- **Behavior**: Returns a single JSON object containing the final `comparison.json` artifact. This object is the single source of truth for the frontend and contains all necessary data, including the list of bidders, their KPIs, and their individual rubric analyses.
+- **Output Body**: 
+```json
+{
+  "case_id": "...",
+  "comparison": { 
+    "case_id": "...",
+    "bidders": [
+      {
+        "doc_id": "...",
+        "name": "...",
+        "kpis": { ... },
+        "analysis": { ... } // The full rubric analysis is nested here
+      }
+    ],
+    "summary": { ... }
+  },
+  "report_pdf_url": "...",
+  "sheet_url": "..."
+}
+```

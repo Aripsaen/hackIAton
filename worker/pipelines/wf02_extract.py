@@ -23,11 +23,8 @@ def run(document: dict) -> dict:
     structured_response["doc_id"] = doc_id
     structured_response["schema_version"] = "v1"
     
-    # Add provenance data (evidence, char offsets) to the structure
-    structured_response_with_provenance = provenance.add_provenance_to_extraction(
-        extraction_data=structured_response,
-        text_content=text_content
-    )
+    # The new prompt is responsible for provenance, so we remove the old client-side logic.
+    structured_response["meta"]["doc_id"] = doc_id
 
     # Save the final JSON to GCS
     result_path = f"results/{case_id}/{doc_id}.extraction.json"

@@ -1,51 +1,47 @@
 import json
 from ..utils import gcs
 
-def run(case_id: str, risk_analyses: list[dict]) -> dict:
-    '''
+def run(case_id: str, extractions: list[dict], analyses: list[dict]) -> dict:
+    """
     WF-04: Comparator
-    - Aggregates multiple offers for the same case_id.
-    - Computes KPIs (compliance, risk, amount).
-    - Stores the result in GCS: `results/{case_id}/comparison.json`.
-    - Returns the comparison data.
-    '''
-    print(f"WF-04: Comparing {len(risk_analyses)} documents for case_id: {case_id}")
+    - Aggregates data from both extractions and analyses.
+    - Computes KPIs based on the new, detailed data structures.
+    - Stores the result in `results/{case_id}/comparison.json`.
+    """
+    print(f"WF-04: Comparing {len(extractions)} documents for case_id: {case_id}")
     
     bidders = []
-    for analysis in risk_analyses:
-        doc_id = analysis["doc_id"]
-        fields = analysis.get("fields", {})
-        flags = analysis.get("risk_analysis", {}).get("flags", [])
+    for i, extraction in enumerate(extractions):
+        analysis = analyses[i] # Assumes a 1-to-1 correspondence
+        doc_id = extraction.get("meta", {}).get("doc_id", f"doc_{i}")
         
-        # KPI: Compliance score (0-1 scale)
-        # Simple example: based on number of fields filled vs. expected
-        expected_fields = ["EntidadContratante", "Contratista", "MontoTotal", "FormaPago", "GarantiaCumplimiento"]
-        filled_fields = [f for f in expected_fields if fields.get(f)]
-        compliance_kpi = len(filled_fields) / len(expected_fields)
+        # KPI: Monto (Amount)
+        monto_kpi = extraction.get("oferta", {}).get("montoOfertado", {}).get("valor", 0)
 
-        # KPI: Risk score (0-1 scale)
-        # Simple example: based on number of risk flags
-        risk_kpi = min(len(flags) / 3.0, 1.0) # Normalize based on ~3 major risks
+        # KPI: Cumplimiento (Compliance Score)
+        # Derived from the rubric score in the analysis output
+        total_puntuacion = analysis.get("totalPuntuacion", 0)
+        # Normalize from 50 (10 criteria * 5) to a 0-1 scale
+        compliance_kpi = total_puntuacion / 50.0 
 
-        # KPI: Amount
-        monto_str = str(fields.get("MontoTotal", "0")).replace(",", "")
-        try:
-            monto_kpi = float(monto_str)
-        except (ValueError, TypeError):
-            monto_kpi = 0.0
+        # KPI: Riesgo (Risk Score)
+        # Derived from the category in the analysis output
+        categoria_riesgo = analysis.get("categoria", "Riesgo Alto").lower()
+        risk_map = {"riesgo bajo": 0.2, "riesgo medio": 0.5, "riesgo alto": 0.8}
+        risk_kpi = risk_map.get(categoria_riesgo, 0.8)
 
         bidders.append({
             "doc_id": doc_id,
-            "name": fields.get("Contratista", "N/A"),
+            "name": extraction.get("partes", {}).get("Contratista", "N/A"),
             "kpis": {
                 "cumplimiento": round(compliance_kpi, 2),
                 "riesgo": round(risk_kpi, 2),
                 "monto": monto_kpi,
             },
-            "flags": flags
+            # Pass the full analysis for this bidder to the frontend
+            "analysis": analysis 
         })
 
-    # Determine the best offer (e.g., lowest amount with high compliance and low risk)
     mejor_oferta = sorted(
         bidders,
         key=lambda b: (b["kpis"]["riesgo"], b["kpis"]["monto"], -b["kpis"]["cumplimiento"])
@@ -56,14 +52,12 @@ def run(case_id: str, risk_analyses: list[dict]) -> dict:
         "bidders": bidders,
         "summary": {
             "mejor_oferta_doc_id": mejor_oferta[0]["doc_id"] if mejor_oferta else None,
-            "comentarios": "La mejor oferta se selecciona por menor riesgo, luego menor monto."
+            "comentarios": "La mejor oferta se selecciona por menor riesgo, luego menor monto y mayor cumplimiento."
         }
     }
 
-    # Save the comparison to GCS
     result_path = f"results/{case_id}/comparison.json"
     gcs.upload_content(result_path, json.dumps(comparison_result, indent=2), "application/json")
-    
-    print(f"WF-04: Saved comparison for {case_id} to {result_path}")
+    print(f"WF-04: Saved new comparison for {case_id} to {result_path}")
     
     return comparison_result
