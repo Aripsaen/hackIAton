@@ -8,9 +8,14 @@ class Settings(BaseSettings):
     GOOGLE_SHEET_ID: str
     SERVICE_ACCOUNT_FILE: str | None = None
     ALLOWED_ORIGINS: str = "*"
+    LLM_PROVIDER: str = "vertex"
+    VERTEX_MODEL_NAME: str = "gemini-1.5-flash-001"
+    VERTEX_PRO_MODEL_NAME: str = "gemini-1.5-pro-001"
+    TEMPERATURE: float = 0.1
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"
 
 settings = Settings()
