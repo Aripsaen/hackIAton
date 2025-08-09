@@ -11,8 +11,7 @@ class Settings(BaseSettings):
     # LLM Settings
     LLM_PROVIDER: str = "vertex"
     VERTEX_MODEL_NAME: str = "gemini-1.5-flash-001"
-    OPENAI_API_KEY: str | None = None
-    OPENAI_MODEL_NAME: str = "gpt-4o"
+    VERTEX_PRO_MODEL_NAME: str = "gemini-1.5-pro-001"
     TEMPERATURE: float = 0.1
 
     class Config:

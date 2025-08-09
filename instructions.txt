@@ -3,12 +3,13 @@
 --- NEXT STEPS ---
 
 1.  **Set Environment Variables:**
+    *   `cd repo` (or navigate to the project root if you already ran the scaffold script)
     *   `cp .env.example .env`
     *   Edit `.env` with your GCP Project ID, GCS Bucket, Sheet ID, etc.
-    *   For local development, ensure `SERVICE_ACCOUNT_FILE` points to a valid key.
+    *   **Crucially, define both LLM models:** `VERTEX_MODEL_NAME` (for extraction) and `VERTEX_PRO_MODEL_NAME` (for analysis).
 
 2.  **Run Locally:**
-    *   `make install`
+    *   `make install` (This will install LangChain and other new dependencies)
     *   `make run-api`
 
 3.  **Build Docker Images:**
@@ -20,14 +21,14 @@
 
 4.  **Deploy to Cloud Run:**
     *   **Deploy API Service:**
-        `gcloud run deploy api-procurement --source . --platform managed --region ${REGION} --allow-unauthenticated --set-env-vars "PROJECT_ID=${PROJECT_ID},BUCKET_NAME=<your-bucket>,GOOGLE_SHEET_ID=<your-sheet-id>" --service-account <your-sa-email>`
+        `gcloud run deploy api-procurement --source . --platform managed --region ${REGION} --allow-unauthenticated --set-env-vars-from-file .env`
     *   **Deploy Worker Job:**
-        `gcloud run jobs deploy worker-procurement --source . --platform managed --region ${REGION} --set-env-vars "PROJECT_ID=${PROJECT_ID},BUCKET_NAME=<your-bucket>,GOOGLE_SHEET_ID=<your-sheet-id>" --service-account <your-sa-email>`
+        `gcloud run jobs deploy worker-procurement --source . --platform managed --region ${REGION} --set-env-vars-from-file .env`
 
 5.  **Trigger a Job Execution:**
-    *   First, upload a PDF to `gs://<your-bucket>/raw/<case-id>/document.pdf`
+    *   First, upload one or more PDFs to `gs://<your-bucket>/raw/<case-id>/`
     *   `gcloud run jobs execute worker-procurement --region ${REGION} --args "--case_id=<case-id>"`
 
-6.  **Open Looker Studio Dashboard:**
-    *   Follow the instructions in `README.md` to connect Looker Studio to your Google Sheet.
-
+6.  **Check Results:**
+    *   After the job succeeds, you can get all results (ready for a frontend) by calling the API: `curl http://<your-api-url>/result/<case-id>`
+    *   Or check the artifacts in your GCS bucket and the Looker Studio dashboard.

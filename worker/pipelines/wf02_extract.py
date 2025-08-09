@@ -2,14 +2,14 @@ import json
 from ..utils import gcs, llm_provider, config, provenance
 
 def run(document: dict) -> dict:
-    '''
+    """
     WF-02: Classification & Extraction
     - Loads the normalized text for a document.
     - Prompts the LLM to extract key fields into a normalized JSON structure.
     - Validates the LLM output and enriches it with provenance.
     - Stores the result in GCS: `results/{case_id}/{doc_id}.extraction.json`.
     - Returns the structured data.
-    '''
+    """
     case_id = document["case_id"]
     doc_id = document["doc_id"]
     text_content = document["text_content"]

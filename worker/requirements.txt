@@ -8,7 +8,8 @@ google-auth-httplib2
 
 # LLM
 google-cloud-aiplatform
-openai
+langchain
+langchain-google-vertexai
 
 # PDF & Text
 PyMuPDF

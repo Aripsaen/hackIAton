@@ -28,7 +28,11 @@ class StatusResponse(BaseModel):
 # --- /result/{case_id} ---
 class ResultResponse(BaseModel):
     case_id: str
-    extractions: List[Dict[str, Any]] = Field(..., description="List of extraction JSONs with signed URLs for download.")
-    comparison: Dict[str, Any] = Field(..., description="Comparison JSON with a signed URL for download.")
+    # Return the actual data for the web app frontend
+    extractions: List[Dict[str, Any]] = Field(..., description="List of extraction JSONs for each document.")
+    comparison: Dict[str, Any] = Field(..., description="The comparison JSON for the case.")
+    final_analysis: Dict[str, Any] = Field(..., description="The final, executive analysis JSON for the case.")
+    
+    # URLs for artifacts that are better downloaded
     report_pdf_url: str = Field(..., description="Signed URL for the summary PDF report.")
     sheet_url: str = Field(..., description="URL to the Google Sheet dashboard.")

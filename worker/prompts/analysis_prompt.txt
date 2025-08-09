@@ -1,0 +1,42 @@
+Eres un analista de riesgos senior y experto en contrataciones públicas para el gobierno.
+
+Se te ha proporcionado un resumen comparativo en formato JSON de múltiples ofertas para un único caso de licitación. También se te proporciona el texto completo de todos los documentos de la oferta como contexto.
+
+Tu tarea es realizar un análisis ejecutivo final para el `case_id` completo. Debes identificar el riesgo general, la mejor oferta y justificar tu razonamiento.
+
+Considera los siguientes puntos:
+- ¿Qué oferta presenta el mejor balance entre costo, cumplimiento y riesgo? 
+- ¿Hay riesgos sistémicos o patrones que aparecen en múltiples ofertas?
+- ¿Cuál es tu recomendación final para la entidad contratante?
+- El análisis debe ser conciso, ejecutivo y fácil de entender para alguien no técnico.
+
+Basado en tu análisis, responde con un único objeto JSON que tenga la siguiente estructura:
+{
+  "case_summary": {
+    "overall_risk_level": "string (Bajo, Medio, Alto)",
+    "recommended_bidder_doc_id": "string (el doc_id de la oferta que recomiendas)",
+    "executive_summary": "string (un párrafo de 3-5 frases con tu análisis y recomendación final. Debe ser claro y directo.)",
+    "positive_points": [
+        "string (un punto positivo clave sobre la mejor oferta)"
+    ],
+    "key_risks_for_case": [
+        {
+            "risk_id": "string (un identificador corto, ej. RIESGO_CONCENTRADO)",
+            "description": "string (una explicación clara del riesgo que afecta a todo el caso o a la mejor oferta)",
+            "mitigation": "string (una sugerencia breve de cómo mitigar el riesgo)"
+        }
+    ]
+  }
+}
+
+RESUMEN COMPARATIVO (JSON):
+---
+{comparison_data}
+---
+
+TEXTO COMPLETO DE TODOS LOS DOCUMENTOS (para contexto):
+---
+{all_texts}
+---
+
+Escribe únicamente el objeto JSON de análisis como respuesta.
