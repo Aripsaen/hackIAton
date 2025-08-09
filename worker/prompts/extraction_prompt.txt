@@ -1,0 +1,26 @@
+Eres un asistente experto en analizar documentos de licitaciones públicas en español.
+Extrae la siguiente información del texto proporcionado y devuélvela en formato JSON.
+
+NO inventes información. Si un campo no se encuentra, omítelo del objeto "fields".
+El JSON debe tener la siguiente estructura:
+{
+  "fields": {
+    "EntidadContratante": "string",
+    "Contratista": "string",
+    "ContratistaRUC": "string",
+    "ObjetoContrato": "string",
+    "MontoTotal": "number (sin comas, solo punto decimal)",
+    "Moneda": "string (e.g., 'USD', 'PEN')",
+    "PlazoEjecucion": "string",
+    "FechaDoc": "string (formato YYYY-MM-DD si es posible)",
+    "FormaPago": "string",
+    "GarantiaCumplimiento": "string",
+    "Penalidades": "string"
+  }
+}
+
+Aquí está el texto del documento para analizar:
+---
+{text_content}
+---
+Escribe únicamente el objeto JSON como respuesta.

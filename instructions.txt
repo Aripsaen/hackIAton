@@ -1,0 +1,33 @@
+✅ Scaffolding complete.
+
+--- NEXT STEPS ---
+
+1.  **Set Environment Variables:**
+    *   `cp .env.example .env`
+    *   Edit `.env` with your GCP Project ID, GCS Bucket, Sheet ID, etc.
+    *   For local development, ensure `SERVICE_ACCOUNT_FILE` points to a valid key.
+
+2.  **Run Locally:**
+    *   `make install`
+    *   `make run-api`
+
+3.  **Build Docker Images:**
+    *   `export PROJECT_ID=`gcloud config get-value project`
+    *   `export REGION="us-central1"` # Or your preferred region
+    *   `gcloud auth configure-docker ${REGION}-docker.pkg.dev`
+    *   `make build-api-docker && make push-api-docker`
+    *   `make build-worker-docker && make push-worker-docker`
+
+4.  **Deploy to Cloud Run:**
+    *   **Deploy API Service:**
+        `gcloud run deploy api-procurement --source . --platform managed --region ${REGION} --allow-unauthenticated --set-env-vars "PROJECT_ID=${PROJECT_ID},BUCKET_NAME=<your-bucket>,GOOGLE_SHEET_ID=<your-sheet-id>" --service-account <your-sa-email>`
+    *   **Deploy Worker Job:**
+        `gcloud run jobs deploy worker-procurement --source . --platform managed --region ${REGION} --set-env-vars "PROJECT_ID=${PROJECT_ID},BUCKET_NAME=<your-bucket>,GOOGLE_SHEET_ID=<your-sheet-id>" --service-account <your-sa-email>`
+
+5.  **Trigger a Job Execution:**
+    *   First, upload a PDF to `gs://<your-bucket>/raw/<case-id>/document.pdf`
+    *   `gcloud run jobs execute worker-procurement --region ${REGION} --args "--case_id=<case-id>"`
+
+6.  **Open Looker Studio Dashboard:**
+    *   Follow the instructions in `README.md` to connect Looker Studio to your Google Sheet.
+
