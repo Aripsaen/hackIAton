@@ -1,5 +1,0 @@
-fastapi
-uvicorn[standard]
-pydantic-settings
-google-cloud-storage
-google-cloud-run

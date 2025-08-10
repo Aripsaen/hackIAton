@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Bidder Analysis Platform</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Automated Bidder Analysis Platform</h1>
+
+        <section class="upload-section card">
+            <h2>Upload Bidder Documents</h2>
+            <input type="file" id="pdfUpload" accept=".pdf" multiple>
+            <button id="startAnalysisBtn">Start Analysis</button>
+            <div id="uploadStatus" class="status-message"></div>
+            <div id="caseIdDisplay" class="info-message"></div>
+        </section>
+
+        <section class="case-list-section card">
+            <h2>Existing Cases</h2>
+            <ul id="caseList">
+                <!-- Cases will be loaded here by JavaScript -->
+            </ul>
+        </section>
+
+        <section class="analysis-results-section card" style="display:none;">
+            <h2>Analysis Results for Case: <span id="currentCaseId"></span></h2>
+            <div id="resultsStatus" class="status-message"></div>
+            <div id="bidderComparison">
+                <!-- Comparison data will be displayed here -->
+            </div>
+            <button id="downloadReportBtn" style="display:none;">Download Report (PDF)</button>
+        </section>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

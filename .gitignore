@@ -1,6 +1,5 @@
-.venv/
-node_modules/
-frontend/node_modules/
 .env
-__pycache__/
-/service_account
+/.venv/
+**/__pycache__
+/local_storage_mock
+/temp

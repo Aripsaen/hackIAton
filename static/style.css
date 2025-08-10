@@ -1,0 +1,148 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card h2 {
+    color: #34495e;
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+input[type="file"] {
+    display: block;
+    margin-bottom: 15px;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: calc(100% - 16px);
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.status-message {
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #e7f3fe;
+    border: 1px solid #d4edda;
+    color: #155724;
+}
+
+.info-message {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+#caseList {
+    list-style: none;
+    padding: 0;
+}
+
+#caseList li {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#caseList li a {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+#caseList li span {
+    font-size: 0.9em;
+    color: #666;
+}
+
+.bidder-card {
+    border: 1px solid #b3e0ff;
+    background-color: #e6f7ff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+}
+
+.bidder-card h3 {
+    color: #0056b3;
+    margin-top: 0;
+}
+
+.bidder-card p {
+    margin: 5px 0;
+}
+
+.bidder-card strong {
+    color: #333;
+}
+
+.kpi-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px dashed #ccc;
+}
+
+.kpi-section h3 {
+    color: #28a745;
+}
+
+.kpi-section p {
+    font-size: 1.1em;
+    font-weight: bold;
+}
