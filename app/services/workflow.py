@@ -58,6 +58,9 @@ async def process_document_workflow(
         storage_client.upload_file(analysis_json_path, f"results/{case_id}/{doc_id}.analysis.json")
         print(f"Analysis complete for {doc_id}")
 
+        # Mark document as completed
+        update_document_status(case_id, doc_id, "completed")
+
     except Exception as e:
         print(f"Error processing document {doc_id}: {e}")
     finally:

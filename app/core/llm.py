@@ -4,36 +4,43 @@ from app.core.config import settings
 import json
 
 # Initialize LLM based on configuration
-if settings.LLM_PROVIDER == "gemini":
+# Initialize Extraction LLM based on configuration
+if settings.EXTRACTION_LLM_PROVIDER == "gemini":
     from langchain_google_genai import ChatGoogleGenerativeAI
     extraction_llm = ChatGoogleGenerativeAI(
         model=settings.EXTRACTION_MODEL_NAME,
-        temperature=0.1,
-        google_api_key=settings.GOOGLE_API_KEY
+        temperature=settings.EXTRACTION_TEMPERATURE,
+        google_api_key=settings.EXTRACTION_API_KEY
     )
-    analysis_llm = ChatGoogleGenerativeAI(
-        model=settings.ANALYSIS_MODEL_NAME,
-        temperature=0.2,
-        google_api_key=settings.GOOGLE_API_KEY
-    )
-elif settings.LLM_PROVIDER == "openai":
+elif settings.EXTRACTION_LLM_PROVIDER == "openai":
     from langchain_openai import ChatOpenAI
-    # Use specific OpenAI model names if defined, otherwise fallback to generic ones
     openai_extraction_model = os.getenv("EXTRACTION_MODEL_NAME_OPENAI", "gpt-3.5-turbo")
-    openai_analysis_model = os.getenv("ANALYSIS_MODEL_NAME_OPENAI", "gpt-4o")
-
     extraction_llm = ChatOpenAI(
         model=openai_extraction_model,
-        temperature=0.1,
-        openai_api_key=settings.OPENAI_API_KEY
-    )
-    analysis_llm = ChatOpenAI(
-        model=openai_analysis_model,
-        temperature=0.2,
-        openai_api_key=settings.OPENAI_API_KEY
+        temperature=settings.EXTRACTION_TEMPERATURE,
+        openai_api_key=settings.EXTRACTION_API_KEY
     )
 else:
-    raise ValueError("Unsupported LLM_PROVIDER. Please set LLM_PROVIDER to 'gemini' or 'openai' in your .env file.")
+    raise ValueError("Unsupported EXTRACTION_LLM_PROVIDER. Please set EXTRACTION_LLM_PROVIDER to 'gemini' or 'openai' in your .env file.")
+
+# Initialize Analysis LLM based on configuration
+if settings.ANALYSIS_LLM_PROVIDER == "gemini":
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    analysis_llm = ChatGoogleGenerativeAI(
+        model=settings.ANALYSIS_MODEL_NAME,
+        temperature=settings.ANALYSIS_TEMPERATURE,
+        google_api_key=settings.ANALYSIS_API_KEY
+    )
+elif settings.ANALYSIS_LLM_PROVIDER == "openai":
+    from langchain_openai import ChatOpenAI
+    openai_analysis_model = os.getenv("ANALYSIS_MODEL_NAME_OPENAI", "gpt-4o")
+    analysis_llm = ChatOpenAI(
+        model=openai_analysis_model,
+        temperature=settings.ANALYSIS_TEMPERATURE,
+        openai_api_key=settings.ANALYSIS_API_KEY
+    )
+else:
+    raise ValueError("Unsupported ANALYSIS_LLM_PROVIDER. Please set ANALYSIS_LLM_PROVIDER to 'gemini' or 'openai' in your .env file.")
 
 # --- WF-02: Extraction Prompt and Schema ---
 
