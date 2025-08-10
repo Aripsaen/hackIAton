@@ -106,31 +106,35 @@ This application uses environment variables for sensitive information and config
     GCS_BUCKET_NAME="your-gcs-bucket-name"
 
     # LLM Configuration
-    # Choose your LLM provider: "gemini" or "openai"
-    LLM_PROVIDER="gemini"
+    # Set the provider for the extraction model: "gemini" or "openai"
+    EXTRACTION_LLM_PROVIDER="gemini"
 
-    # Your Google API Key for Gemini Models (REQUIRED if LLM_PROVIDER is "gemini")
-    # Get it from https://ai.google.dev/gemini-api/docs/get-started/python
-    GOOGLE_API_KEY="your-google-api-key"
+    # Set the provider for the analysis model: "gemini" or "openai"
+    ANALYSIS_LLM_PROVIDER="gemini"
 
-    # Your OpenAI API Key (REQUIRED if LLM_PROVIDER is "openai")
-    # Get it from https://platform.openai.com/account/api-keys
-    # Uncomment the line below and replace with your key if using OpenAI
-    # OPENAI_API_KEY="your-openai-api-key"
+    # API Keys for specific models/providers
+    # If using Gemini, set EXTRACTION_API_KEY and ANALYSIS_API_KEY to your Google API Key.
+    # If using OpenAI, set EXTRACTION_API_KEY and ANALYSIS_API_KEY to your OpenAI API Key.
+    EXTRACTION_API_KEY="your-extraction-api-key"
+    ANALYSIS_API_KEY="your-analysis-api-key"
 
     # Model names. These will be used based on the LLM_PROVIDER setting.
-    # For Gemini (used if LLM_PROVIDER="gemini"):
+    # For Gemini:
     EXTRACTION_MODEL_NAME="gemini-1.5-flash"
     ANALYSIS_MODEL_NAME="gemini-1.5-pro"
 
-    # For OpenAI (used if LLM_PROVIDER="openai"). Uncomment and set if using OpenAI:
+    # For OpenAI (uncomment and set if using OpenAI):
     # EXTRACTION_MODEL_NAME_OPENAI="gpt-3.5-turbo"
     # ANALYSIS_MODEL_NAME_OPENAI="gpt-4o"
+
+    # Temperature settings for models (0.0 to 1.0)
+    EXTRACTION_TEMPERATURE=0.1
+    ANALYSIS_TEMPERATURE=0.2
     ```
 
     **Important:**
-    *   If you choose `LLM_PROVIDER="gemini"`, you **must** provide your `GOOGLE_API_KEY`.
-    *   If you choose `LLM_PROVIDER="openai"`, you **must** uncomment and provide your `OPENAI_API_KEY`.
+    *   For each model (extraction and analysis), ensure you set its `_LLM_PROVIDER` (e.g., `EXTRACTION_LLM_PROVIDER`) to either `"gemini"` or `"openai"`.
+    *   Provide the corresponding API key in `EXTRACTION_API_KEY` and `ANALYSIS_API_KEY`. If using Gemini, this will be your Google API Key. If using OpenAI, this will be your OpenAI API Key.
     *   For local development, `ENV=development` is sufficient, and `GCP_PROJECT_ID` and `GCS_BUCKET_NAME` are not strictly needed as mock storage will be used.
 
 ### Option A: Run Locally (for Development)
