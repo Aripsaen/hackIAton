@@ -1,40 +1,138 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Licitando</title>
-  <link rel="stylesheet" href="/static/style.css"/>
-</head>
-<body class="theme-licitando">
-  <div class="container">
-    <h1>Licitando</h1>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Licitando</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="theme-licitando">
+    <header class="app-header">
+      <div class="container header-inner">
+        <div class="brand">
+          <span class="brand-logo" aria-hidden="true">logo</span>
+          <span class="brand-name">Licitando</span>
+        </div>
+        <nav class="header-actions">
+          <a class="link" href="#analysisResultsSection">Resultados</a>
+          <a class="link" href="#caseList">Casos</a>
+        </nav>
+      </div>
+    </header>
 
-    <section class="upload-section card">
-      <h2>Subir Documentos de Oferentes</h2>
-      <input type="file" id="pdfUpload" accept=".pdf" multiple />
-      <button id="startAnalysisBtn">Iniciar Análisis</button>
-      <div id="uploadStatus" class="status-message"></div>
-      <div id="caseIdDisplay" class="info-message"></div>
-    </section>
+    <main class="container">
+      <section class="grid">
+        <div class="card">
+          <div class="card-header">
+            <h2>Nueva evaluación</h2>
+            <p class="subtle">Sube uno o más PDFs para iniciar un caso.</p>
+          </div>
 
-    <section class="case-list-section card">
-      <h2>Casos Existentes</h2>
-      <ul id="caseList"></ul>
-    </section>
+          <div
+            id="dropzone"
+            class="dropzone"
+            aria-label="Zona para subir archivos"
+          >
+            <div class="dropzone-inner">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 16V8m0 0l-3 3m3-3l3 3"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M20 16.5a4.5 4.5 0 01-4.5 4.5h-7A4.5 4.5 0 014 16.5 4.5 4.5 0 018.5 12h.75"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <div>
+                <strong>Arrastra y suelta</strong> PDFs aquí o
+                <label for="pdfUpload" class="link">buscar</label>
+              </div>
+              <div class="hint">Sólo se aceptan archivos .pdf</div>
+            </div>
+            <input
+              type="file"
+              id="pdfUpload"
+              accept=".pdf"
+              multiple
+              aria-label="Selecciona archivos PDF"
+            />
+          </div>
 
-    <!-- Optional purely-decorative elements (safe to remove if not wanted) -->
-    <div class="violet-divider" aria-hidden="true"></div>
-    <!-- div class="city-skyline-strip" aria-hidden="true"></div-->
+          <div class="actions">
+            <button id="startAnalysisBtn" class="btn primary">
+              Iniciar análisis
+            </button>
+          </div>
 
-    <section id="analysisResultsSection" class="analysis-results-section card" style="display:none;">
-      <h2>Resultados del Análisis para el Caso: <span id="currentCaseId"></span></h2>
-      <div id="resultsStatus" class="status-message"></div>
-      <div id="bidderComparison"></div>
-      <button id="downloadReportBtn" style="display:none;">Descargar Informe (PDF)</button>
-    </section>
-  </div>
+          <output
+            id="uploadStatus"
+            class="status-message"
+            aria-live="polite"
+          ></output>
+          <output
+            id="caseIdDisplay"
+            class="info-message"
+            aria-live="polite"
+          ></output>
+        </div>
 
-  <script src="/static/script.js"></script>
-</body>
+        <div class="card">
+          <div class="card-header">
+            <h2>Casos existentes</h2>
+            <p class="subtle">Abre un caso para ver sus resultados.</p>
+          </div>
+          <ul id="caseList" class="list"></ul>
+        </div>
+      </section>
+
+      <section id="analysisResultsSection" class="card" style="display: none">
+        <div class="card-header">
+          <h2>Resultados del análisis</h2>
+          <p class="subtle">Caso: <span id="currentCaseId"></span></p>
+        </div>
+        <output
+          id="resultsStatus"
+          class="status-message"
+          aria-live="polite"
+        ></output>
+        <div class="text-analysis">
+          <h3>Análisis en texto</h3>
+          <div id="textAnalysis"></div>
+        </div>
+        <div id="bidderComparison" class="bidders-grid"></div>
+        <div class="actions end">
+          <button id="downloadReportBtn" class="btn" style="display: none">
+            Descargar informe (PDF)
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div class="container">
+        <span class="muted">© <span id="year"></span> Licitando</span>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const y = document.getElementById("year");
+        if (y) y.textContent = new Date().getFullYear();
+      });
+    </script>
+    <script src="/static/script.js"></script>
+  </body>
 </html>
