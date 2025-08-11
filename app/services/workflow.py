@@ -8,6 +8,7 @@ from datetime import datetime
 from app.core.storage import storage_client
 from app.core.llm import extraction_chain, analysis_chain, extraction_json_schema, analysis_json_schema
 from app.models.schemas import ExtractionResult, AnalysisResult, ComparisonResult, BidderSummary
+from app.services.ruc_lookup import fetch_ruc_info # Import the new service
 
 # Temporary directory for processing files
 TEMP_DIR = "./temp"
@@ -44,15 +45,27 @@ async def process_document_workflow(
 
         # WF-02: Extraction (Per-Document)
         print(f"Starting extraction for {doc_id}...")
-        extracted_data = await extract_data_with_llm(text_content)
+        extracted_data_dict = await extract_data_with_llm(text_content)
+        extracted_data = ExtractionResult(**extracted_data_dict)
+
+        # New Step: RUC Lookup and Append (After WF-02, Before saving extraction.json)
+        if extracted_data.partes.RUC:
+            print(f"RUC found: {extracted_data.partes.RUC}. Attempting RUC lookup...")
+            ruc_info = await fetch_ruc_info(extracted_data.partes.RUC)
+            if ruc_info:
+                extracted_data.ruc_info = ruc_info
+                print(f"RUC info fetched and appended for {doc_id}.")
+            else:
+                print(f"Could not fetch RUC info for {extracted_data.partes.RUC}.")
+
         with open(extraction_json_path, "w", encoding="utf-8") as f:
-            json.dump(extracted_data, f, indent=2, ensure_ascii=False)
+            json.dump(extracted_data.model_dump(), f, indent=2, ensure_ascii=False)
         storage_client.upload_file(extraction_json_path, f"results/{case_id}/{doc_id}.extraction.json")
         print(f"Extraction complete for {doc_id}")
 
         # WF-03: Analysis (Per-Document)
         print(f"Starting analysis for {doc_id}...")
-        analysis_data = await analyze_data_with_llm(extracted_data)
+        analysis_data = await analyze_data_with_llm(extracted_data.model_dump())
         with open(analysis_json_path, "w", encoding="utf-8") as f:
             json.dump(analysis_data, f, indent=2, ensure_ascii=False)
         storage_client.upload_file(analysis_json_path, f"results/{case_id}/{doc_id}.analysis.json")
@@ -63,6 +76,7 @@ async def process_document_workflow(
 
     except Exception as e:
         print(f"Error processing document {doc_id}: {e}")
+        update_document_status(case_id, doc_id, "failed") # Mark as failed on error
     finally:
         # Clean up temporary files
         for f_path in [pdf_path, text_path, extraction_json_path, analysis_json_path]:
@@ -116,22 +130,23 @@ async def analyze_data_with_llm(extracted_data: Dict[str, Any]) -> Dict[str, Any
         print(f"Error during LLM analysis: {e}")
         # Return a default empty structure if analysis fails
         return AnalysisResult(
-            calificacion={
-                "cumplimientoRequisitosLegales": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "claridadYComplejidadTecnica": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "viabilidadDelCronogramaDeEjecucion": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "evaluacionDeRiesgosFinancierosYEconomicos": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "garantiasYPenalizaciones": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "condicionesDePagoYAvances": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "capacidadesTecnicasDelContratista": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "mecanismosDeResolucionDeConflictos": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "cumplimientoConNormativasTecnicasYLegales": {"puntuacion": 0, "comentario": "Error en análisis"},
-                "impactoYSostenibilidadDelProyecto": {"puntuacion": 0, "comentario": "Error en análisis"}
+            evaluacionRiesgos={
+                "estadoRuc": {"puntuacion": 0, "comentario": "Error en análisis"},
+                "requisitosLegales": {"puntuacion": 0, "comentario": "Error en análisis"},
+                "viabilidadTecnica": {"puntuacion": 0, "comentario": "Error en análisis"},
+                "viabilidadCronograma": {"puntuacion": 0, "comentario": "Error en análisis"},
+                "garantiasPenalizaciones": {"puntuacion": 0, "comentario": "Error en análisis"}
             },
-            totalPuntuacion=0,
-            categoria="Error",
-            analisis={"puntosFuertes": [], "puntosDeMejora": []},
-            conclusion="Análisis fallido."
+            kpis={
+                "puntuacionTotal": 0,
+                "ratioPuntuacionMonto": 0.0,
+                "alineacionContratista": 0
+            },
+            resumenRiesgos={
+                "puntosCriticos": ["Error en análisis"],
+                "puntosDeMejora": ["Error en análisis"],
+                "conclusion": "Análisis fallido."
+            }
         ).model_dump()
 
 async def get_comparison_report(case_id: str) -> ComparisonResult:
@@ -174,15 +189,14 @@ async def get_comparison_report(case_id: str) -> ComparisonResult:
                 if os.path.exists(temp_extraction_path): os.remove(temp_extraction_path)
                 if os.path.exists(temp_analysis_path): os.remove(temp_analysis_path)
 
-    # Compute KPIs (example: score_per_dollar_offered)
+    # Compute KPIs (now directly from analysis result)
     kpis = {}
     for bidder in bidders:
-        monto_ofertado = bidder.extraction.oferta.montoOfertado.valor
-        total_puntuacion = bidder.analysis.totalPuntuacion
-        if monto_ofertado > 0:
-            kpis[bidder.doc_id] = {"score_per_dollar_offered": total_puntuacion / monto_ofertado}
-        else:
-            kpis[bidder.doc_id] = {"score_per_dollar_offered": 0}
+        kpis[bidder.doc_id] = {
+            "puntuacionTotal": bidder.analysis.kpis.puntuacionTotal,
+            "ratioPuntuacionMonto": bidder.analysis.kpis.ratioPuntuacionMonto,
+            "alineacionContratista": bidder.analysis.kpis.alineacionContratista
+        }
 
     comparison_result = ComparisonResult(
         case_id=case_id,
@@ -217,22 +231,25 @@ async def generate_report_pdf(case_id: str) -> str:
     story = []
 
     # Title
-    story.append(Paragraph(f"Bidder Analysis Report - Case ID: {case_id}", styles['h1']))
+    story.append(Paragraph(f"Informe de Análisis de Ofertas - ID de Caso: {case_id}", styles['h1']))
     story.append(Spacer(1, 0.2 * 100))
 
     # Summary Table
-    summary_data = [["Bidder ID", "Contractor", "Offered Amount (USD)", "Total Score", "Score/Dollar"]] # Added Score/Dollar
+    summary_data = [["ID Oferente", "Contratista", "Monto Ofertado (USD)", "Puntuación Total", "Ratio Puntuación/Monto", "Alineación"]]
     for bidder in comparison_data.bidders:
         contractor_name = bidder.extraction.partes.Contratista or "N/A"
         monto_ofertado = bidder.extraction.oferta.montoOfertado.valor
-        total_puntuacion = bidder.analysis.totalPuntuacion
-        score_per_dollar = comparison_data.kpis.get(bidder.doc_id, {}).get("score_per_dollar_offered", 0)
+        total_score = bidder.analysis.kpis.puntuacionTotal
+        ratio_score_monto = bidder.analysis.kpis.ratioPuntuacionMonto
+        alineacion = "Alineado" if bidder.analysis.kpis.alineacionContratista == 1 else "No Alineado"
+
         summary_data.append([
             bidder.doc_id,
             contractor_name,
             f"${monto_ofertado:,.2f}",
-            str(total_puntuacion),
-            f"{score_per_dollar:.4f}"
+            str(total_score),
+            f"{ratio_score_monto:.2f}",
+            alineacion
         ])
     
     summary_table = Table(summary_data)
@@ -250,25 +267,34 @@ async def generate_report_pdf(case_id: str) -> str:
 
     # Detailed Analysis for each bidder
     for bidder in comparison_data.bidders:
-        story.append(Paragraph(f"Detailed Analysis for Bidder: {bidder.doc_id} ({bidder.extraction.partes.Contratista})", styles['h2']))
+        story.append(Paragraph(f"Análisis Detallado para el Oferente: {bidder.doc_id} ({bidder.extraction.partes.Contratista})", styles['h2']))
         story.append(Spacer(1, 0.1 * 100))
 
-        story.append(Paragraph("**Extraction Summary:**", styles['h3']))
-        story.append(Paragraph(f"Object of Contract: {bidder.extraction.contrato.ObjetoContrato}", styles['Normal']))
-        story.append(Paragraph(f"Total Amount: ${bidder.extraction.contrato.MontoTotal.valor:,.2f} {bidder.extraction.contrato.MontoTotal.moneda}", styles['Normal']))
-        story.append(Paragraph(f"Payment Form: {bidder.extraction.contrato.FormaPago}", styles['Normal']))
+        story.append(Paragraph("**Resumen de Extracción:**", styles['h3']))
+        story.append(Paragraph(f"Objeto del Contrato: {bidder.extraction.contrato.ObjetoContrato}", styles['Normal']))
+        story.append(Paragraph(f"Monto Total: ${bidder.extraction.contrato.MontoTotal.valor:,.2f} {bidder.extraction.contrato.MontoTotal.moneda}", styles['Normal']))
+        story.append(Paragraph(f"Forma de Pago: {bidder.extraction.contrato.FormaPago}", styles['Normal']))
+        
+        if bidder.extraction.ruc_info:
+            story.append(Paragraph("**Información del RUC:**", styles['h3']))
+            ruc_main = bidder.extraction.ruc_info.get("data", {}).get("main", [{}])[0]
+            story.append(Paragraph(f"Razón Social: {ruc_main.get('razonSocial', 'N/A')}", styles['Normal']))
+            story.append(Paragraph(f"Estado Contribuyente: {ruc_main.get('estadoContribuyenteRuc', 'N/A')}", styles['Normal']))
+            story.append(Paragraph(f"Actividad Económica Principal: {ruc_main.get('actividadEconomicaPrincipal', 'N/A')}", styles['Normal']))
+            # Add more RUC fields as needed
+
         story.append(Spacer(1, 0.1 * 100))
 
-        story.append(Paragraph("**Analysis Scores:**", styles['h3']))
-        analysis_scores_data = [["Criterion", "Score", "Comment"]]
-        for criterion, details in bidder.analysis.calificacion.model_dump().items():
-            analysis_scores_data.append([
+        story.append(Paragraph("**Evaluación de Riesgos (Puntuación):**", styles['h3']))
+        risk_eval_data = [["Criterio", "Puntuación", "Comentario"]]
+        for criterion, details in bidder.analysis.evaluacionRiesgos.model_dump().items():
+            risk_eval_data.append([
                 criterion.replace('_', ' ').title(),
                 str(details['puntuacion']),
                 details['comentario']
             ])
-        analysis_scores_table = Table(analysis_scores_data, colWidths=[2*100, 0.8*100, 4*100])
-        analysis_scores_table.setStyle(TableStyle([
+        risk_eval_table = Table(risk_eval_data, colWidths=[2*100, 0.8*100, 4*100])
+        risk_eval_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
@@ -276,13 +302,19 @@ async def generate_report_pdf(case_id: str) -> str:
             ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
         ]))
-        story.append(analysis_scores_table)
+        story.append(risk_eval_table)
         story.append(Spacer(1, 0.1 * 100))
 
-        story.append(Paragraph("**Overall Analysis:**", styles['h3']))
-        story.append(Paragraph(f"Strong Points: {', '.join(bidder.analysis.analisis.puntosFuertes)}", styles['Normal']))
-        story.append(Paragraph(f"Improvement Points: {', '.join(bidder.analysis.analisis.puntosDeMejora)}", styles['Normal']))
-        story.append(Paragraph(f"Conclusion: {bidder.analysis.conclusion}", styles['Normal']))
+        story.append(Paragraph("**KPIs Calculados:**", styles['h3']))
+        story.append(Paragraph(f"Puntuación Total: {bidder.analysis.kpis.puntuacionTotal}", styles['Normal']))
+        story.append(Paragraph(f"Ratio Puntuación/Monto: {bidder.analysis.kpis.ratioPuntuacionMonto:.2f}", styles['Normal']))
+        story.append(Paragraph(f"Alineación del Contratista: {'Alineado' if bidder.analysis.kpis.alineacionContratista == 1 else 'No Alineado'}", styles['Normal']))
+        story.append(Spacer(1, 0.1 * 100))
+
+        story.append(Paragraph("**Resumen de Riesgos:**", styles['h3']))
+        story.append(Paragraph(f"Puntos Críticos: {', '.join(bidder.analysis.resumenRiesgos.puntosCriticos)}", styles['Normal']))
+        story.append(Paragraph(f"Puntos de Mejora: {', '.join(bidder.analysis.resumenRiesgos.puntosDeMejora)}", styles['Normal']))
+        story.append(Paragraph(f"Conclusión: {bidder.analysis.resumenRiesgos.conclusion}", styles['Normal']))
         story.append(Spacer(1, 0.4 * 100))
 
     doc.build(story)
@@ -307,12 +339,20 @@ def update_document_status(case_id: str, doc_id: str, status: str, file_name: st
         doc_info["status"] == "completed" 
         for doc_info in case_statuses[case_id]["documents"].values()
     )
-    if all_docs_completed and case_statuses[case_id]["documents"]:
-        case_statuses[case_id]["status"] = "completed"
-    elif not all_docs_completed and case_statuses[case_id]["documents"]:
-        case_statuses[case_id]["status"] = "processing"
-    else:
+    any_docs_failed = any(
+        doc_info["status"] == "failed" 
+        for doc_info in case_statuses[case_id]["documents"].values()
+    )
+    total_docs = len(case_statuses[case_id]["documents"])
+
+    if total_docs == 0:
         case_statuses[case_id]["status"] = "empty"
+    elif all_docs_completed:
+        case_statuses[case_id]["status"] = "completed"
+    elif any_docs_failed:
+        case_statuses[case_id]["status"] = "partially_completed"
+    else:
+        case_statuses[case_id]["status"] = "processing"
 
 def get_all_cases_summary() -> List[Dict[str, Any]]:
     summaries = []

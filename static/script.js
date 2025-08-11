@@ -37,23 +37,31 @@ document.addEventListener('DOMContentLoaded', () => {
                     const li = document.createElement('li');
                     const link = document.createElement('a');
                     link.href = '#';
-                    link.textContent = `Case ID: ${caseItem.case_id}`; 
+                    link.textContent = `ID de Caso: ${caseItem.case_id}`; 
                     link.onclick = (e) => {
                         e.preventDefault();
                         loadCaseResults(caseItem.case_id);
                     };
                     li.appendChild(link);
                     const statusSpan = document.createElement('span');
-                    statusSpan.textContent = `Status: ${caseItem.status} (${caseItem.document_count} docs)`;
+                    // Status values (completed, partially_completed, processing, empty, not_found) are internal and not translated here
+                    let displayStatus = caseItem.status;
+                    if (caseItem.status === 'completed') displayStatus = 'Completado';
+                    else if (caseItem.status === 'partially_completed') displayStatus = 'Parcialmente Completado';
+                    else if (caseItem.status === 'processing') displayStatus = 'Procesando';
+                    else if (caseItem.status === 'empty') displayStatus = 'Vacío';
+                    else if (caseItem.status === 'not_found') displayStatus = 'No Encontrado';
+
+                    statusSpan.textContent = `Estado: ${displayStatus} (${caseItem.document_count} docs)`;
                     li.appendChild(statusSpan);
                     caseList.appendChild(li);
                 });
             } else {
-                caseList.innerHTML = '<li>No cases found. Upload documents to create one.</li>';
+                caseList.innerHTML = '<li>No se encontraron casos. Sube documentos para crear uno.</li>';
             }
         } catch (error) {
             console.error('Error fetching cases:', error);
-            showMessage(uploadStatus, 'Error loading cases.', 'error');
+            showMessage(uploadStatus, 'Error al cargar casos.', 'error');
         }
     }
 
@@ -61,18 +69,22 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadCaseResults(caseId) {
         currentCaseId = caseId;
         currentCaseIdDisplay.textContent = caseId;
-        analysisResultsSection.style.display = 'block';
+        if (analysisResultsSection) {
+            analysisResultsSection.style.display = 'block';
+        } else {
+            console.error("Error: analysisResultsSection element not found.");
+        }
         bidderComparisonDiv.innerHTML = '';
         downloadReportBtn.style.display = 'none';
-        showMessage(resultsStatus, 'Fetching analysis results...', 'info');
+        showMessage(resultsStatus, 'Obteniendo resultados del análisis...', 'info');
 
         try {
             const statusResponse = await fetch(`/api/cases/${caseId}/status`);
             const statusData = await statusResponse.json();
 
-            if (statusData.status !== 'completed') {
-                showMessage(resultsStatus, `Case is still ${statusData.status}. Please wait...`, 'info');
-                // Poll for status if not completed
+            if (statusData.status !== 'completed' && statusData.status !== 'partially_completed') {
+                showMessage(resultsStatus, `El caso aún está ${statusData.status === 'processing' ? 'procesando' : statusData.status}. Por favor, espera...`, 'info');
+                // Poll for status if not completed or partially_completed
                 setTimeout(() => loadCaseResults(caseId), 5000); 
                 return;
             }
@@ -84,12 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const comparisonData = await comparisonResponse.json();
             
             displayComparisonResults(comparisonData);
-            showMessage(resultsStatus, 'Analysis complete!', 'success');
+            showMessage(resultsStatus, 'Análisis completado!', 'success');
             downloadReportBtn.style.display = 'block';
 
         } catch (error) {
             console.error('Error fetching comparison results:', error);
-            showMessage(resultsStatus, `Error loading results: ${error.message}. Please try again later.`, 'error');
+            showMessage(resultsStatus, `Error al cargar resultados: ${error.message}. Por favor, inténtalo de nuevo más tarde.`, 'error');
         }
     }
 
@@ -101,10 +113,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (Object.keys(data.kpis).length > 0) {
             const kpiSection = document.createElement('div');
             kpiSection.className = 'kpi-section';
-            kpiSection.innerHTML = '<h3>Key Performance Indicators</h3>';
+            kpiSection.innerHTML = '<h3>Indicadores Clave de Rendimiento</h3>';
             for (const docId in data.kpis) {
                 const kpi = data.kpis[docId];
-                kpiSection.innerHTML += `<p><strong>${docId}</strong>: Score per Dollar Offered: ${kpi.score_per_dollar_offered.toFixed(4)}</p>`;
+                kpiSection.innerHTML += `
+                    <p><strong>Oferente ${docId}</strong>:</p>
+                    <ul>
+                        <li>Puntuación Total: ${kpi.puntuacionTotal}</li>
+                        <li>Ratio Puntuación/Monto: ${kpi.ratioPuntuacionMonto.toFixed(2)}</li>
+                        <li>Alineación del Contratista: ${kpi.alineacionContratista === 1 ? 'Alineado' : 'No Alineado'}</li>
+                    </ul>
+                `;
             }
             bidderComparisonDiv.appendChild(kpiSection);
         }
@@ -112,15 +131,30 @@ document.addEventListener('DOMContentLoaded', () => {
         data.bidders.forEach(bidder => {
             const bidderCard = document.createElement('div');
             bidderCard.className = 'bidder-card';
+            
+            let riskEvaluationHtml = '';
+            for (const criterion in bidder.analysis.evaluacionRiesgos) {
+                const eval = bidder.analysis.evaluacionRiesgos[criterion];
+                riskEvaluationHtml += `
+                    <li><strong>${criterion.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</strong> Puntuación: ${eval.puntuacion}, Comentario: ${eval.comentario}</li>
+                `;
+            }
+
             bidderCard.innerHTML = `
-                <h3>Bidder: ${bidder.extraction.partes.Contratista || bidder.doc_id}</h3>
-                <p><strong>Object of Contract:</strong> ${bidder.extraction.contrato.ObjetoContrato}</p>
-                <p><strong>Offered Amount:</strong> $${bidder.extraction.oferta.montoOfertado.valor.toLocaleString()} ${bidder.extraction.oferta.montoOfertado.moneda}</p>
-                <p><strong>Total Analysis Score:</strong> ${bidder.analysis.totalPuntuacion}</p>
-                <p><strong>Analysis Category:</strong> ${bidder.analysis.categoria}</p>
-                <h4>Analysis Conclusion:</h4>
-                <p>${bidder.analysis.conclusion}</p>
-                <!-- You can add more details here as needed -->
+                <h3>Oferente: ${bidder.extraction.partes.Contratista || bidder.doc_id}</h3>
+                <h4>Evaluación de Riesgos (Puntuación):</h4>
+                <ul>${riskEvaluationHtml}</ul>
+                <h4>KPIs Calculados:</h4>
+                <ul>
+                    <li>Puntuación Total: ${bidder.analysis.kpis.puntuacionTotal}</li>
+                    <li>Ratio Puntuación/Monto: ${bidder.analysis.kpis.ratioPuntuacionMonto.toFixed(2)}</li>
+                    <li>Alineación del Contratista: ${bidder.analysis.kpis.alineacionContratista === 1 ? 'Alineado' : 'No Alineado'}</li>
+                </ul>
+                <h4>Resumen de Riesgos:</h4>
+                <p><strong>Puntos Críticos:</strong> ${bidder.analysis.resumenRiesgos.puntosCriticos.join('; ')}</p>
+                <p><strong>Puntos de Mejora:</strong> ${bidder.analysis.resumenRiesgos.puntosDeMejora.join('; ')}</p>
+                <p><strong>Conclusión:</strong> ${bidder.analysis.resumenRiesgos.conclusion}</p>
+                <!-- Puedes añadir más detalles aquí si es necesario -->
             `;
             bidderComparisonDiv.appendChild(bidderCard);
         });
@@ -130,15 +164,15 @@ document.addEventListener('DOMContentLoaded', () => {
     startAnalysisBtn.addEventListener('click', async () => {
         const files = pdfUpload.files;
         if (files.length === 0) {
-            showMessage(uploadStatus, 'Please select at least one PDF file.', 'error');
+            showMessage(uploadStatus, 'Por favor, selecciona al menos un archivo PDF.', 'error');
             return;
         }
 
         startAnalysisBtn.disabled = true;
-        showMessage(uploadStatus, 'Uploading and starting analysis...', 'info');
+        showMessage(uploadStatus, 'Subiendo e iniciando análisis...', 'info');
 
         currentCaseId = generateUUID(); // Generate a new case ID for this batch of uploads
-        caseIdDisplay.textContent = `Processing Case ID: ${currentCaseId}`; 
+        caseIdDisplay.textContent = `Procesando ID de Caso: ${currentCaseId}`; 
         caseIdDisplay.style.display = 'block';
 
         const formData = new FormData();
@@ -158,14 +192,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await response.json();
             console.log('Upload result:', result);
-            showMessage(uploadStatus, `Successfully uploaded ${files.length} documents. Analysis started in background.`, 'success');
+            showMessage(uploadStatus, `Se subieron ${files.length} documentos correctamente. Análisis iniciado en segundo plano.`, 'success');
             pdfUpload.value = ''; // Clear file input
             fetchCases(); // Refresh case list
             loadCaseResults(currentCaseId); // Start polling for results for the new case
 
         } catch (error) {
             console.error('Error during upload:', error);
-            showMessage(uploadStatus, `Upload failed: ${error.message}`, 'error');
+            showMessage(uploadStatus, `Error durante la subida: ${error.message}`, 'error');
         } finally {
             startAnalysisBtn.disabled = false;
         }
@@ -176,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentCaseId) {
             window.open(`/api/cases/${currentCaseId}/report`, '_blank');
         } else {
-            showMessage(resultsStatus, 'No case selected to download report.', 'error');
+            showMessage(resultsStatus, 'No hay caso seleccionado para descargar el informe.', 'error');
         }
     });
 

@@ -144,135 +144,82 @@ extraction_chain = extraction_prompt_template | extraction_llm
 # --- WF-03: Analysis Prompt and Schema ---
 
 analysis_json_schema = {
-  "calificacion": {
-    "cumplimientoRequisitosLegales": {
-      "puntuacion": 5,
-      "comentario": "El contrato cumple completamente con los requisitos legales establecidos."
+  "evaluacionRiesgos": {
+    "estadoRuc": {
+      "puntuacion": 100,
+      "comentario": "El estado del RUC del contratista es 'ACTIVO', lo cual es un requisito fundamental."
     },
-    "claridadYComplejidadTecnica": {
-      "puntuacion": 4,
-      "comentario": "Las condiciones técnicas son claras, pero algunas especificaciones adicionales podrían mejorar la claridad."
+    "requisitosLegales": {
+      "puntuacion": 50,
+      "comentario": "El contrato identifica claramente a las partes, el RUC, la legislación aplicable y los mecanismos de resolución de conflictos."
     },
-    "viabilidadDelCronogramaDeEjecucion": {
-      "puntuacion": 3,
-      "comentario": "El cronograma es ambicioso y podría ser difícil de cumplir. Se recomienda una revisión."
+    "viabilidadTecnica": {
+      "puntuacion": 50,
+      "comentario": "Las especificaciones técnicas, personal y maquinaria requerida están bien detalladas, lo que minimiza el riesgo técnico."
     },
-    "evaluacionDeRiesgosFinancierosYEconomicos": {
-      "puntuacion": 5,
-      "comentario": "El presupuesto está bien definido y el flujo de caja es realista."
+    "viabilidadCronograma": {
+      "puntuacion": 50,
+      "comentario": "El cronograma de 12 meses parece razonable para la magnitud del proyecto."
     },
-    "garantiasYPenalizaciones": {
-      "puntuacion": 5,
-      "comentario": "Las garantías y penalizaciones están bien estructuradas y cubren adecuadamente los riesgos."
-    },
-    "condicionesDePagoYAvances": {
-      "puntuacion": 4,
-      "comentario": "Las condiciones de pago son claras, pero los avances podrían ser más flexibles."
-    },
-    "capacidadesTecnicasDelContratista": {
-      "puntuacion": 5,
-      "comentario": "El contratista tiene la experiencia y el personal adecuado para el proyecto."
-    },
-    "mecanismosDeResolucionDeConflictos": {
-      "puntuacion": 3,
-      "comentario": "Los mecanismos de resolución de conflictos son básicos y podrían ser más detallados."
-    },
-    "cumplimientoConNormativasTecnicasYLegales": {
-      "puntuacion": 5,
-      "comentario": "El contrato cumple con todas las normativas locales e internacionales pertinentes."
-    },
-    "impactoYSostenibilidadDelProyecto": {
-      "puntuacion": 2,
-      "comentario": "No se mencionan los impactos ambientales ni la sostenibilidad del proyecto."
+    "garantiasPenalizaciones": {
+      "puntuacion": 0,
+      "comentario": "Aunque se definen garantías, no se especifica si cubren todos los riesgos potenciales del contrato. Las penalizaciones por retraso (0.1% diario) son estándar, pero la 'penalización técnica' es vaga y requiere mayor definición."
     }
   },
-  "totalPuntuacion": 45,
-  "categoria": "Riesgo Bajo",
-  "analisis": {
-    "puntosFuertes": [
-      "Cumple con todos los requisitos legales.",
-      "Condiciones técnicas detalladas y claras."
+  "kpis": {
+    "puntuacionTotal": 250,
+    "ratioPuntuacionMonto": 12.5,
+    "alineacionContratista": 0
+  },
+  "resumenRiesgos": {
+    "puntosCriticos": [
+      "La actividad económica del RUC no coincide con el objeto del contrato."
     ],
     "puntosDeMejora": [
-      "Flujo de caja necesita ajustes.",
-      "Falta de detalles sobre sostenibilidad ambiental."
-    ]
-  },
-  "conclusion": "El contrato es sólido y bien estructurado. Aunque hay áreas de mejora en términos financieros y de sostenibilidad, se recomienda su aprobación con seguimiento."
+      "Se requiere más detalle en las garantías y penalizaciones para cubrir todos los escenarios de riesgo."
+    ],
+    "conclusion": "La oferta presenta un riesgo crítico debido a la inconsistencia entre la actividad económica del contratista y el objeto del contrato. Esto es un factor de descalificación inmediato. Se recomienda rechazar la oferta a menos que el contratista pueda demostrar una experiencia sustancial y relevante en proyectos similares."
+  }
 }
 
 analysis_prompt_template = ChatPromptTemplate.from_template(
-    """Con base en los datos extraídos del texto en formato JSON, evalúa el contrato de obra pública utilizando la siguiente rúbrica. La calificación debe incluir una puntuación para cada uno de los criterios, y para cada criterio proporciona un comentario breve explicando la evaluación. Además, al final incluye un análisis general del contrato con los puntos fuertes, los puntos de mejora y una conclusión.
+    """Actúa como un analista experto en contratos. Tu tarea es evaluar una oferta de obra pública basándote en un JSON de datos extraídos y en la información del RUC del contratista. No solo identifiques los riesgos, sino que también calcules KPIs específicos para cuantificar el valor de la oferta.
 
-Rúbrica de Evaluación:
+Entrada:
+Recibirás un único JSON que contiene:
+1. La información extraída del contrato.
+2. Un objeto anidado `ruc_info` con los datos del RUC del contratista.
 
-Cumplimiento de Requisitos Legales
+Rúbrica de Evaluación y Cálculo de KPIs:
+1.  **Estado y Actividad del RUC:**
+    * **Puntuación:** Otorga 0 puntos si el `estadoContribuyenteRuc` no es "ACTIVO" o si la `actividadEconomicaPrincipal` no es coherente con el `ObjetoContrato`. Otorga 100 puntos si ambos son correctos.
+    * **Comentario:** Explica la razón de la puntuación (si es 0, especifica si es por el estado o la actividad).
+2.  **Cumplimiento de Requisitos Legales:**
+    * **Puntuación:** Otorga 50 puntos si el contrato cumple con la identificación de partes, RUC, legislación y mecanismos de controversias. Otorga 0 si falta alguno.
+    * **Comentario:** Detalla cualquier requisito legal faltante.
+3.  **Viabilidad Técnica:**
+    * **Puntuación:** Otorga 50 puntos si las especificaciones, personal y maquinaria son detalladas y adecuadas. Otorga 0 si son vagas.
+    * **Comentario:** Describe la claridad de la información técnica.
+4.  **Viabilidad del Cronograma:**
+    * **Puntuación:** Otorga 50 puntos si el cronograma es realista. Otorga 0 si es demasiado ambicioso o desestructurado.
+    * **Comentario:** Evalúa la coherencia del cronograma.
+5.  **Garantías y Penalizaciones:**
+    * **Puntuación:** Otorga 50 puntos si las cláusulas son claras y proporcionales. Otorga 0 si son débiles o vagas.
+    * **Comentario:** Menciona si las cláusulas cubren todos los riesgos potenciales.
 
-Puntuación: [1-5]
+**Cálculo de KPIs:**
+Una vez obtenidas las puntuaciones, calcula los siguientes KPIs:
 
-Comentario: Evalúa si el contrato cumple con todos los requisitos legales, tales como la identificación de las partes involucradas (entidad contratante, contratista), RUC del contratista, legislación aplicable y mecanismos de resolución de conflictos.
+1.  **Puntuación Total:** Suma las puntuaciones de todos los criterios (RUC + Requisitos Legales + Viabilidad Técnica + Viabilidad del Cronograma + Garantías). La puntuación máxima es 300.
+2.  **Ratio de Puntuación vs. Monto Ofertado:**
+    * **Fórmula:** `(Puntuación Total / Monto Total Ofertado) * 1,000,000`
+    * **Objetivo:** Este KPI normaliza el valor de la oferta, permitiendo comparar ofertas de distintos montos. Un valor más alto indica una mejor oferta por cada millón de USD.
+3.  **Alineación del Contratista:**
+    * **Fórmula:** `0` si la actividad del RUC no coincide con el contrato; `1` si sí coincide.
+    * **Objetivo:** Este es un indicador binario de riesgo crítico.
 
-Claridad y Complejidad Técnica
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si las condiciones técnicas del contrato están claramente definidas, con detalles sobre materiales, especificaciones, maquinaria, personal requerido, etc.
-
-Viabilidad del Cronograma de Ejecución
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si el cronograma propuesto es realista y bien estructurado, y si los plazos asignados para las diferentes fases del proyecto son adecuados.
-
-Evaluación de Riesgos Financieros y Económicos
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si el presupuesto total y las partidas específicas están bien definidos, y si hay un plan de flujo de caja razonable para evitar riesgos financieros o de sobrecostos.
-
-Garantías y Penalizaciones
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si las garantías y penalizaciones están bien definidas y si cubren adecuadamente los riesgos, como incumplimiento o retrasos.
-
-Condiciones de Pago y Avances
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si las condiciones de pago son claras, justas y si los avances y pagos están bien estructurados para asegurar un flujo de trabajo adecuado.
-
-Capacidades Técnicas del Contratista
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si el contratista tiene la experiencia, capacidades técnicas y personal adecuado para cumplir con los requisitos del contrato.
-
-Mecanismos de Resolución de Conflictos
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si los mecanismos de resolución de conflictos están bien definidos, como la mediación, arbitraje o conciliación, y si son apropiados para el tipo de contrato.
-
-Cumplimiento con Normativas Técnicas y Legales
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si el contrato cumple con las normativas locales e internacionales pertinentes para la ejecución de la obra.
-
-Impacto y Sostenibilidad del Proyecto
-
-Puntuación: [1-5]
-
-Comentario: Evalúa si el contrato tiene en cuenta la sostenibilidad del proyecto y sus posibles impactos ambientales o sociales.
-
-Resultado Esperado:
-
-Devuelve la puntuación obtenida en cada uno de los criterios de la rúbrica de evaluación.
-
-Proporciona un comentario explicando cómo se ha calificado cada criterio.
-
-Al final, incluye un análisis detallado con los puntos fuertes, los puntos de mejora y una conclusión final sobre el contrato.
+**Estructura de la Salida:**
+Tu respuesta debe ser un único JSON con la siguiente estructura. No agregues texto adicional ni explicaciones fuera del JSON.
 
 JSON_SCHEMA:
 {json_schema}

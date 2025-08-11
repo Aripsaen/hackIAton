@@ -3,3 +3,4 @@
 **/__pycache__
 /local_storage_mock
 /temp
+/local_cache

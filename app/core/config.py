@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     EXTRACTION_TEMPERATURE: float = 0.1
     ANALYSIS_TEMPERATURE: float = 0.2
 
+    # WebServices.ec RUC Lookup Configuration
+    WEBSERVICES_EC_API_KEY: Optional[str] = None
+    USE_WEBSERVICES_EC_MOCK: bool = False
+
+    # RUC Cache Configuration
+    RUC_CACHE_EXPIRY_HOURS: int = 24
+    RUC_CACHE_FILE: str = "local_cache/ruc_cache.json"
+
     # For OpenAI, you might use models like "gpt-3.5-turbo" or "gpt-4o"
     # EXTRACTION_MODEL_NAME_OPENAI: str = "gpt-3.5-turbo"
     # ANALYSIS_MODEL_NAME_OPENAI: str = "gpt-4o"

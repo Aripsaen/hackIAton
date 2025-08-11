@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, BeforeValidator, field_validator
 from typing import List, Dict, Any, Optional
 
 # --- WF-02: Extraction Schemas ---
@@ -90,10 +90,16 @@ class Oferta(BaseModel):
     garantiaMantenimiento: float = 0
 
 class ProvenanceItem(BaseModel):
-    campo: str
+    campo: Optional[str] = None
     evidencia: str
     start_char: int
     end_char: int
+
+    @field_validator('evidencia', mode='before')
+    @classmethod
+    def convert_evidencia_to_str(cls, v: Any) -> str:
+        """Converts any input to string for the evidencia field."""
+        return str(v)
 
 class Diagnostics(BaseModel):
     missing: List[str] = []
@@ -111,37 +117,37 @@ class ExtractionResult(BaseModel):
     presupuestoMensual: List[PresupuestoMensual] = []
     flujoCaja: List[FlujoCajaItem] = []
     oferta: Oferta = Field(default_factory=Oferta)
+    ruc_info: Optional[Dict[str, Any]] = None # Added for RUC lookup data
     provenance: List[ProvenanceItem] = []
     diagnostics: Diagnostics = Field(default_factory=Diagnostics)
 
 # --- WF-03: Analysis Schemas ---
 
-class CalificacionCriterio(BaseModel):
+class EvaluacionRiesgoCriterio(BaseModel):
     puntuacion: int
     comentario: str
 
-class Calificacion(BaseModel):
-    cumplimientoRequisitosLegales: CalificacionCriterio
-    claridadYComplejidadTecnica: CalificacionCriterio
-    viabilidadDelCronogramaDeEjecucion: CalificacionCriterio
-    evaluacionDeRiesgosFinancierosYEconomicos: CalificacionCriterio
-    garantiasYPenalizaciones: CalificacionCriterio
-    condicionesDePagoYAvances: CalificacionCriterio
-    capacidadesTecnicasDelContratista: CalificacionCriterio
-    mecanismosDeResolucionDeConflictos: CalificacionCriterio
-    cumplimientoConNormativasTecnicasYLegales: CalificacionCriterio
-    impactoYSostenibilidadDelProyecto: CalificacionCriterio
+class EvaluacionRiesgos(BaseModel):
+    estadoRuc: EvaluacionRiesgoCriterio
+    requisitosLegales: EvaluacionRiesgoCriterio
+    viabilidadTecnica: EvaluacionRiesgoCriterio
+    viabilidadCronograma: EvaluacionRiesgoCriterio
+    garantiasPenalizaciones: EvaluacionRiesgoCriterio
 
-class Analisis(BaseModel):
-    puntosFuertes: List[str]
+class KpisCalculados(BaseModel):
+    puntuacionTotal: int
+    ratioPuntuacionMonto: float
+    alineacionContratista: int
+
+class ResumenRiesgos(BaseModel):
+    puntosCriticos: List[str]
     puntosDeMejora: List[str]
+    conclusion: str
 
 class AnalysisResult(BaseModel):
-    calificacion: Calificacion
-    totalPuntuacion: int
-    categoria: str
-    analisis: Analisis
-    conclusion: str
+    evaluacionRiesgos: EvaluacionRiesgos
+    kpis: KpisCalculados
+    resumenRiesgos: ResumenRiesgos
 
 # --- WF-04: Comparison Schemas ---
 
