@@ -1,224 +1,224 @@
-# Automated Bidder Analysis Platform
+# Licitando: Plataforma Automatizada de Análisis de Licitadores
 
-This project is a full-stack web application designed to automate the analysis and comparison of bidder documents for a hackathon.
+Este proyecto es una aplicación web full-stack diseñada para automatizar el análisis y la comparación de documentos de licitadores para un hackathon.
 
-## Features
+## Características
 
-- **PDF Ingestion**: Upload multiple bidder PDF documents via a web interface.
-- **Automated Extraction**: Uses Google's Gemini Flash model to extract key information into a structured JSON format.
-- **Rubric-Based Analysis**: Uses Google's Gemini Pro model via LangChain to analyze the extracted data against a predefined rubric, generating scores and qualitative feedback.
-- **Bidder Comparison**: Aggregates data from all bidders in a "case" to provide a side-by-side comparison.
-- **Report Generation**: Creates a final summary report in PDF format.
-- **Flexible Storage**: Supports both a local file-based mock for development and Google Cloud Storage for production.
-- **Easy Deployment**: Containerized with Docker for simple, one-command setup and execution.
+- **Ingesta y Análisis Automatizado de PDF**: Carga sin problemas múltiples documentos PDF de licitadores a través de una interfaz web, con extracción automatizada del contenido de texto sin procesar.
+- **Extracción de Datos Impulsada por LLM**: Utiliza un LLM rápido (por ejemplo, Gemini Flash) para extraer datos JSON detallados y estructurados de cada documento basándose en un esquema predefinido.
+- **Análisis LLM Basado en Rúbricas**: Emplea un LLM más capaz (por ejemplo, Gemini Pro) a través de LangChain para evaluar los datos extraídos contra una rúbrica de puntuación, generando puntuaciones y retroalimentación cualitativa por documento.
+- **Comparación Integral de Licitadores**: Agrega y compara datos de todos los licitadores analizados para un caso dado, calculando indicadores clave de rendimiento (KPIs) y generando una comparación única y completa.
+- **Generación Automatizada de Informes**: Produce un informe PDF legible por humanos que resume todos los licitadores, sus puntuaciones y KPIs.
+- **Opciones Flexibles de Almacenamiento**: Admite tanto un simulacro local basado en archivos para desarrollo como Google Cloud Storage (GCS) para entornos de producción.
+- **Despliegue Contenerizado**: Empaquetado con Docker para un despliegue fácil, consistente y portátil.
 
-## Technology Stack
+## Pila Tecnológica
 
 - **Backend**: Python 3.11, FastAPI
-- **Frontend**: HTML, CSS, JavaScript (no frameworks)
-- **LLM Orchestration**: LangChain
-- **LLM Models**: Configurable (Google Gemini Pro/Flash, OpenAI GPT models supported via LangChain)
-- **PDF Parsing**: `pdfplumber`
-- **Report Generation**: `reportlab`
-- **Deployment**: Docker
+- **Frontend**: HTML, CSS, JavaScript (sin frameworks)
+- **Orquestación de LLM**: LangChain
+- **Modelos LLM**: Configurables (Google Gemini Pro/Flash, modelos OpenAI GPT compatibles a través de LangChain)
+- **Análisis de PDF**: `pdfplumber`
+- **Generación de Informes**: `reportlab`
+- **Despliegue**: Docker
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
 /
 |-- app/
 |   |-- __init__.py
-|   |-- main.py             # FastAPI app definition & endpoints
+|   |-- main.py             # Definición de la aplicación FastAPI y endpoints
 |   |-- core/
 |   |   |-- __init__.py
-|   |   |-- config.py         # Configuration loading from .env
-|   |   |-- llm.py            # LangChain and Gemini integration
-|   |   |-- storage.py        # GCS client (real and mock)
+|   |   |-- config.py         # Carga de configuración desde .env
+|   |   |-- llm.py            # Integración de LangChain y Gemini
+|   |   |-- storage.py        # Cliente GCS (real y simulado)
 |   |-- services/
 |   |   |-- __init__.py
-|   |   |-- workflow.py       # All workflow logic (ingest, extract, analyze, etc.)
+|   |   |-- workflow.py       # Toda la lógica del flujo de trabajo (ingesta, extracción, análisis, etc.)
 |   |-- models/
 |   |   |-- __init__.py
-|   |   |-- schemas.py        # Pydantic models for data structures
+|   |   |-- schemas.py        # Modelos Pydantic para estructuras de datos
 |-- static/
-|   |-- index.html          # Main frontend page
+|   |-- index.html          # Página principal del frontend
 |   |-- style.css
 |   |-- script.js
-|-- .env.example            # Example environment variables
-|-- requirements.txt        # Python dependencies
-|-- Dockerfile              # Docker container definition
+|-- .env.example            # Variables de entorno de ejemplo
+|-- requirements.txt        # Dependencias de Python
+|-- Dockerfile              # Definición del contenedor Docker
 |-- README.md
 ```
 
-## Setup and Running the Application
+## Configuración y Ejecución de la Aplicación
 
-This section provides detailed instructions on how to set up and run the Automated Bidder Analysis Platform. You can choose between running it locally for development or using Docker for a more consistent and deployable environment.
+Esta sección proporciona instrucciones detalladas sobre cómo configurar y ejecutar la Plataforma Automatizada de Análisis de Licitadores. Puede elegir entre ejecutarla localmente para desarrollo o usar Docker para un entorno más consistente y desplegable.
 
-### Prerequisites
+### Prerrequisitos
 
-Before you begin, ensure you have the following installed on your system:
+Antes de comenzar, asegúrese de tener lo siguiente instalado en su sistema:
 
-*   **Git**: For cloning the repository.
-    *   [Download Git](https://git-scm.com/downloads)
-*   **Python 3.11+**: For local development without Docker.
-    *   [Download Python](https://www.python.org/downloads/)
-*   **pip**: Python's package installer (usually comes with Python).
-*   **Docker Desktop**: For building and running the application in a containerized environment (recommended for both development and deployment).
-    *   [Download Docker Desktop](https://www.docker.com/products/docker-desktop/)
-*   **An API Key for your chosen LLM provider**: You'll need either a Google API Key (for Gemini models) or an OpenAI API Key (for GPT models).
-    *   **Google API Key**: [Get a Google API Key](https://ai.google.dev/gemini-api/docs/get-started/python)
-    *   **OpenAI API Key**: [Get an OpenAI API Key](https://platform.openai.com/account/api-keys)
+*   **Git**: Para clonar el repositorio.
+    *   [Descargar Git](https://git-scm.com/downloads)
+*   **Python 3.11+**: Para desarrollo local sin Docker.
+    *   [Descargar Python](https://www.python.org/downloads/)
+*   **pip**: El instalador de paquetes de Python (generalmente viene con Python).
+*   **Docker Desktop**: Para construir y ejecutar la aplicación en un entorno contenerizado (recomendado tanto para desarrollo como para despliegue).
+    *   [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop/)
+*   **Una clave API para su proveedor de LLM elegido**: Necesitará una clave API de Google (para modelos Gemini) o una clave API de OpenAI (para modelos GPT).
+    *   **Clave API de Google**: [Obtener una clave API de Google](https://ai.google.dev/gemini-api/docs/get-started/python)
+    *   **Clave API de OpenAI**: [Obtener una clave API de OpenAI](https://platform.openai.com/account/api-keys)
 
-### Step 1: Clone the Repository
+### Paso 1: Clonar el Repositorio
 
-Open your terminal or command prompt and run the following command to clone the project to your local machine:
+Abra su terminal o símbolo del sistema y ejecute el siguiente comando para clonar el proyecto en su máquina local:
 
 ```bash
 git clone https://github.com/your-username/automated-bidder-analysis-platform.git
 cd automated-bidder-analysis-platform
 ```
 
-(Replace `https://github.com/your-username/automated-bidder-analysis-platform.git` with the actual repository URL if it's different.)
+(Reemplace `https://github.com/your-username/automated-bidder-analysis-platform.git` con la URL real del repositorio si es diferente).
 
-### Step 2: Configure Environment Variables
+### Paso 2: Configurar Variables de Entorno
 
-This application uses environment variables for sensitive information and configuration. A template file `.env.example` is provided.
+Esta aplicación utiliza variables de entorno para información sensible y configuración. Se proporciona un archivo de plantilla `.env.example`.
 
-1.  **Copy the example `.env` file:**
+1.  **Copie el archivo `.env` de ejemplo:**
 
     ```bash
     cp .env.example .env
     ```
 
-2.  **Edit the `.env` file:** Open the newly created `.env` file in a text editor. You need to fill in the required values.
+2.  **Edite el archivo `.env`:** Abra el archivo `.env` recién creado en un editor de texto. Debe completar los valores requeridos.
 
     ```env
-    # Set to "production" to use Google Cloud Storage, otherwise uses local mock storage.
-    # For local development, keep this as "development".
+    # Establezca en "production" para usar Google Cloud Storage, de lo contrario usa el almacenamiento simulado local.
+    # Para desarrollo local, manténgalo como "development".
     ENV=development
 
-    # Your Google Cloud Project ID (only needed if ENV is "production" and you're using GCS)
-    # If you're running locally with mock storage, you can leave this as is.
-    GCP_PROJECT_ID="your-gcp-project-id"
+    # Su ID de proyecto de Google Cloud (solo necesario si ENV es "production" y está usando GCS)
+    # Si está ejecutando localmente con almacenamiento simulado, puede dejarlo como está.
+    GCP_PROJECT_ID="su-id-de-proyecto-gcp"
 
-    # The GCS bucket name to use (only needed if ENV is "production" and you're using GCS)
-    # If you're running locally with mock storage, you can leave this as is.
-    GCS_BUCKET_NAME="your-gcs-bucket-name"
+    # El nombre del bucket de GCS a usar (solo necesario si ENV es "production" y está usando GCS)
+    # Si está ejecutando localmente con almacenamiento simulado, puede dejarlo como está.
+    GCS_BUCKET_NAME="su-nombre-de-bucket-gcs"
 
-    # LLM Configuration
-    # Set the provider for the extraction model: "gemini" or "openai"
+    # Configuración de LLM
+    # Establezca el proveedor para el modelo de extracción: "gemini" u "openai"
     EXTRACTION_LLM_PROVIDER="gemini"
 
-    # Set the provider for the analysis model: "gemini" or "openai"
+    # Establezca el proveedor para el modelo de análisis: "gemini" u "openai"
     ANALYSIS_LLM_PROVIDER="gemini"
 
-    # API Keys for specific models/providers
-    # If using Gemini, set EXTRACTION_API_KEY and ANALYSIS_API_KEY to your Google API Key.
-    # If using OpenAI, set EXTRACTION_API_KEY and ANALYSIS_API_KEY to your OpenAI API Key.
-    EXTRACTION_API_KEY="your-extraction-api-key"
-    ANALYSIS_API_KEY="your-analysis-api-key"
+    # Claves API para modelos/proveedores específicos
+    # Si usa Gemini, establezca EXTRACTION_API_KEY y ANALYSIS_API_KEY con su clave API de Google.
+    # Si usa OpenAI, establezca EXTRACTION_API_KEY y ANALYSIS_API_KEY con su clave API de OpenAI.
+    EXTRACTION_API_KEY="su-clave-api-de-extraccion"
+    ANALYSIS_API_KEY="su-clave-api-de-analisis"
 
-    # Model names. These will be used based on the LLM_PROVIDER setting.
-    # For Gemini:
+    # Nombres de modelos. Estos se usarán según la configuración de LLM_PROVIDER.
+    # Para Gemini:
     EXTRACTION_MODEL_NAME="gemini-1.5-flash"
     ANALYSIS_MODEL_NAME="gemini-1.5-pro"
 
-    # For OpenAI (uncomment and set if using OpenAI):
+    # Para OpenAI (descomente y configure si usa OpenAI):
     # EXTRACTION_MODEL_NAME_OPENAI="gpt-3.5-turbo"
     # ANALYSIS_MODEL_NAME_OPENAI="gpt-4o"
 
-    # Temperature settings for models (0.0 to 1.0)
+    # Configuración de temperatura para modelos (0.0 a 1.0)
     EXTRACTION_TEMPERATURE=0.1
     ANALYSIS_TEMPERATURE=0.2
     ```
 
-    **Important:**
-    *   For each model (extraction and analysis), ensure you set its `_LLM_PROVIDER` (e.g., `EXTRACTION_LLM_PROVIDER`) to either `"gemini"` or `"openai"`.
-    *   Provide the corresponding API key in `EXTRACTION_API_KEY` and `ANALYSIS_API_KEY`. If using Gemini, this will be your Google API Key. If using OpenAI, this will be your OpenAI API Key.
-    *   For local development, `ENV=development` is sufficient, and `GCP_PROJECT_ID` and `GCS_BUCKET_NAME` are not strictly needed as mock storage will be used.
+    **Importante:**
+    *   Para cada modelo (extracción y análisis), asegúrese de establecer su `_LLM_PROVIDER` (por ejemplo, `EXTRACTION_LLM_PROVIDER`) en `"gemini"` u `"openai"`.
+    *   Proporcione la clave API correspondiente en `EXTRACTION_API_KEY` y `ANALYSIS_API_KEY`. Si usa Gemini, esta será su clave API de Google. Si usa OpenAI, esta será su clave API de OpenAI.
+    *   Para desarrollo local, `ENV=development` es suficiente, y `GCP_PROJECT_ID` y `GCS_BUCKET_NAME` no son estrictamente necesarios ya que se utilizará el almacenamiento simulado.
 
-### Option A: Run Locally (for Development)
+### Opción A: Ejecutar Localmente (para Desarrollo)
 
-This option is suitable for local development and testing without Docker. You'll need Python and pip installed.
+Esta opción es adecuada para el desarrollo y las pruebas locales sin Docker. Necesitará tener Python y pip instalados.
 
-1.  **Create a Python Virtual Environment (Recommended):**
+1.  **Cree un Entorno Virtual de Python (Recomendado):**
 
     ```bash
     python3 -m venv venv
     ```
 
-2.  **Activate the Virtual Environment:**
+2.  **Active el Entorno Virtual:**
 
-    *   **On macOS/Linux:**
+    *   **En macOS/Linux:**
         ```bash
         source venv/bin/activate
         ```
-    *   **On Windows (Command Prompt):**
+    *   **En Windows (Símbolo del sistema):**
         ```bash
         venv\Scripts\activate.bat
         ```
-    *   **On Windows (PowerShell):**
+    *   **En Windows (PowerShell):**
         ```powershell
         .\venv\Scripts\Activate.ps1
         ```
 
-3.  **Install Python Dependencies:**
+3.  **Instale las Dependencias de Python:**
 
     ```bash
     pip install -r requirements.txt
     ```
 
-4.  **Run the FastAPI Application:**
+4.  **Ejecute la Aplicación FastAPI:**
 
     ```bash
     uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ```
-    *   The `--reload` flag is useful for development as it automatically restarts the server when code changes are detected.
+    *   La bandera `--reload` es útil para el desarrollo, ya que reinicia automáticamente el servidor cuando se detectan cambios en el código.
 
-### Option B: Run with Docker (Recommended for Development & Deployment)
+### Opción B: Ejecutar con Docker (Recomendado para Desarrollo y Despliegue)
 
-This option uses Docker to create a consistent environment, which is ideal for both development and preparing for deployment.
+Esta opción utiliza Docker para crear un entorno consistente, lo cual es ideal tanto para el desarrollo como para la preparación del despliegue.
 
-1.  **Ensure Docker Desktop is Running:** Make sure the Docker application is open and running on your machine.
+1.  **Asegúrese de que Docker Desktop esté en ejecución:** Asegúrese de que la aplicación Docker esté abierta y en ejecución en su máquina.
 
-2.  **Build the Docker Image:** Navigate to the root directory of the project (where `Dockerfile` is located) in your terminal and run:
+2.  **Construya la Imagen de Docker:** Navegue hasta el directorio raíz del proyecto (donde se encuentra `Dockerfile`) en su terminal y ejecute:
 
     ```bash
     docker build -t bidder-analysis-app .
     ```
-    This command builds a Docker image named `bidder-analysis-app` based on the `Dockerfile`.
+    Este comando construye una imagen de Docker llamada `bidder-analysis-app` basada en el `Dockerfile`.
 
-3.  **Run the Docker Container:**
+3.  **Ejecute el Contenedor Docker:**
 
-    *   **For Local Development (with live code changes):**
+    *   **Para Desarrollo Local (con cambios de código en vivo):**
 
         ```bash
         docker run -p 8000:8000 -v "$(pwd)":/app --env-file .env bidder-analysis-app
         ```
-        *   `-p 8000:8000`: Maps port 8000 on your host machine to port 8000 inside the container.
-        *   `-v "$(pwd)":/app`: **(Important for Development)** This mounts your current local project directory into the `/app` directory inside the container. Any changes you make to your local code will be immediately reflected in the running container without needing to rebuild the image.
-        *   `--env-file .env`: Passes your `.env` file's environment variables into the container.
+        *   `-p 8000:8000`: Mapea el puerto 8000 de su máquina host al puerto 8000 dentro del contenedor.
+        *   `-v "$(pwd)":/app`: **(Importante para Desarrollo)** Esto monta su directorio de proyecto local actual en el directorio `/app` dentro del contenedor. Cualquier cambio que realice en su código local se reflejará inmediatamente en el contenedor en ejecución sin necesidad de reconstruir la imagen.
+        *   `--env-file .env`: Pasa las variables de entorno de su archivo `.env` al contenedor.
 
-    *   **For Deployment (e.g., to a server, without live code changes):**
+    *   **Para Despliegue (por ejemplo, a un servidor, sin cambios de código en vivo):**
 
-        For deployment, you typically don't need the volume mount, as the code is already copied into the image during the build process. You might also set `ENV=production` in your `.env` file to enable Google Cloud Storage.
+        Para el despliegue, normalmente no necesitará el montaje de volumen, ya que el código ya se copia en la imagen durante el proceso de construcción. También podría establecer `ENV=production` en su archivo `.env` para habilitar Google Cloud Storage.
 
         ```bash
         docker run -p 8000:8000 --env-file .env bidder-analysis-app
         ```
-        *   In a real deployment scenario, you would likely use a more robust orchestration tool (like Docker Compose, Kubernetes, or a cloud-specific service) and manage your environment variables more securely.
+        *   En un escenario de despliegue real, es probable que utilice una herramienta de orquestación más robusta (como Docker Compose, Kubernetes o un servicio específico de la nube) y gestione sus variables de entorno de forma más segura.
 
-### Step 3: Access the Application
+### Paso 3: Acceder a la Aplicación
 
-Once the application is running (either locally or via Docker), open your web browser and navigate to:
+Una vez que la aplicación esté en ejecución (ya sea localmente o a través de Docker), abra su navegador web y navegue a:
 
 [http://localhost:8000](http://localhost:8000)
 
-You can now upload your bidder PDF files and start the analysis.
+Ahora puede cargar sus archivos PDF de licitadores e iniciar el análisis.
 
-### Cleaning Up (Optional)
+### Limpieza (Opcional)
 
-*   **To stop the Docker container:** Press `Ctrl+C` in the terminal where the container is running. If it's running in detached mode, find its ID (`docker ps`) and then `docker stop <container_id>`.
-*   **To remove the Docker image:** `docker rmi bidder-analysis-app`
-*   **To deactivate the virtual environment (if running locally):** `deactivate`
-*   **To remove the virtual environment folder:** `rm -rf venv` (macOS/Linux) or `rmdir /s /q venv` (Windows)
+*   **Para detener el contenedor Docker:** Presione `Ctrl+C` en la terminal donde se está ejecutando el contenedor. Si se está ejecutando en modo separado, encuentre su ID (`docker ps`) y luego `docker stop <container_id>`.
+*   **Para eliminar la imagen de Docker:** `docker rmi bidder-analysis-app`
+*   **Para desactivar el entorno virtual (si se ejecuta localmente):** `deactivate`
+*   **Para eliminar la carpeta del entorno virtual:** `rm -rf venv` (macOS/Linux) o `rmdir /s /q venv` (Windows)
