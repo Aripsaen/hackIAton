@@ -42,7 +42,7 @@ body {
 
 /* Match page background to the same blue as containers when themed */
 body.theme-licitando {
-  background: linear-gradient(180deg, #0f1428, #121936);
+  background: #121936;
   color: #e6e9f2;
 }
 
@@ -318,6 +318,14 @@ input:focus-visible {
   background: linear-gradient(135deg, #4f7cff, #7aa0ff);
   color: #fff;
   box-shadow: 0 6px 18px rgba(79, 124, 255, 0.35);
+  padding: 4px;
+}
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  filter: none;
 }
 .brand-name {
   letter-spacing: 0.2px;
@@ -348,7 +356,8 @@ main.container {
 
 /* Cards */
 .theme-licitando .card {
-  background: linear-gradient(180deg, #0f1428, #121936);
+  /* Use a solid surface so the page gradient doesn't restart in each card */
+  background: #0f183b;
   border: 1px solid #223058;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
