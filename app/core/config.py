@@ -29,7 +29,7 @@ class Settings(BaseSettings):
 
     # RUC Cache Configuration
     RUC_CACHE_EXPIRY_HOURS: int = 24
-    RUC_CACHE_FILE: str = "local_cache/ruc_cache.json"
+    RUC_CACHE_FILE: str = "/tmp/ruc_cache.json"
 
     # For OpenAI, you might use models like "gpt-3.5-turbo" or "gpt-4o"
     # EXTRACTION_MODEL_NAME_OPENAI: str = "gpt-3.5-turbo"

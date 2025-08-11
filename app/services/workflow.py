@@ -11,7 +11,7 @@ from app.models.schemas import ExtractionResult, AnalysisResult, ComparisonResul
 from app.services.ruc_lookup import fetch_ruc_info # Import the new service
 
 # Temporary directory for processing files
-TEMP_DIR = "./temp"
+TEMP_DIR = "/tmp/temp"
 os.makedirs(TEMP_DIR, exist_ok=True)
 
 async def process_document_workflow(
